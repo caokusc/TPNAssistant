@@ -24,6 +24,9 @@ function App() {
       openAbd: false,
       openAbddose: 0,
       openAbdamount: 0,
+
+      patientFluidneeds: 0,
+      patientLipidnonproteincal: 25,
     },
   })
   const calcIBW = (() => {
@@ -78,13 +81,17 @@ const proteinmarksmax = proMarks[proMarks.findIndex(element => element.stats ===
 
 let calcCalories = patientdosingBW*form.values.patientCaloricNeeds
 let calcProteins = form.values.openAbd ? (patientdosingBW*form.values.patientProteinNeeds)+(form.values.openAbdamount*form.values.openAbddose): patientdosingBW*form.values.patientProteinNeeds
-
+let calcFluids = patientdosingBW*form.values.patientFluidneeds
+let calcNonproteincal = calcCalories - calcProteins*4
+let calcLipidscal = calcNonproteincal*(form.values.patientLipidnonproteincal/100)
+let calcCarbohydratescal = calcCalories - ((calcProteins*4)+calcLipidscal)
+let calcGIR = ((calcCarbohydratescal/3.4)/form.values.patientABW)/((calcFluids/100)*60)
 
   return (
     <><NumberInput
       defaultValue={60}
       placeholder="Patient Weight"
-      label="Patient Weight"
+      label="Patient Weight in KG"
       variant="filled"
       {...form.getInputProps('patientABW')}
       hideControls />
@@ -92,7 +99,7 @@ let calcProteins = form.values.openAbd ? (patientdosingBW*form.values.patientPro
       <NumberInput
         defaultValue={60}
         placeholder="Patient Height"
-        label="Patient Height"
+        label="Patient Height in Inches"
         variant="filled"
         {...form.getInputProps('patientHeight')}
         hideControls />
@@ -132,6 +139,7 @@ let calcProteins = form.values.openAbd ? (patientdosingBW*form.values.patientPro
     <Slider
       size="lg"
       labelAlwaysOn
+      label = {form.values.patientCaloricNeeds + " kcal/kg"}
       min={minCalmark}
       max={maxCalmark}
       {...form.getInputProps('patientCaloricNeeds')}
@@ -165,6 +173,7 @@ let calcProteins = form.values.openAbd ? (patientdosingBW*form.values.patientPro
     <Slider
       size="lg"
       labelAlwaysOn
+      label = {form.values.patientProteinNeeds + " gm/kg"}
       min={proteinmarksmin}
       max={proteinmarksmax}
       step = {0.1}
@@ -195,7 +204,7 @@ let calcProteins = form.values.openAbd ? (patientdosingBW*form.values.patientPro
         <Slider
       size="sm"
       labelAlwaysOn
-      label = {form.values.openAbddose + "gm/L"}
+      label = {form.values.openAbddose + " gm/L"}
       defaultValue={20}
       min={15}
       max={30}
@@ -208,8 +217,41 @@ let calcProteins = form.values.openAbd ? (patientdosingBW*form.values.patientPro
       ]}
     />
 </div>
+<Slider
+      size="sm"
+      labelAlwaysOn
+      label = {form.values.patientFluidneeds + " mL/kg"}
+      defaultValue={40}
+      min={30}
+      max={50}
+      step = {0.5}
+      precision = {3}
+      {...form.getInputProps('patientFluidneeds')}
+      marks={[
+        { value: 30, label: 30 },
+        { value: 50, label: 50 },
+      ]}
+    />
+    "{calcFluids}"
 
-
+    <Slider
+      size="md"
+      labelAlwaysOn
+      label = {form.values.patientLipidnonproteincal + " %"}
+      defaultValue={25}
+      min={20}
+      max={30}
+      step = {0.5}
+      precision = {3}
+      {...form.getInputProps('patientLipidnonproteincal')}
+      marks={[
+        { value: 20, label: 20 },
+        { value: 30, label: 30 },
+      ]}
+    />
+    "{calcLipidscal}"
+    "{calcCarbohydratescal}"
+    "{calcGIR*1000}"
       </>
 
 
