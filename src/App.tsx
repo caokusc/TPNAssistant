@@ -36,19 +36,30 @@ function App() {
       openAbddose: 0,
       openAbdamount: 0,
 
-      patientFluidneeds:40,
+      patientFluidneeds: 40,
       patientLipidnonproteincal: 25,
-      propofol: 0,
+      propofol: false,
+      propofolrate: 0,
+      customVolume: false,
+      customVolumeamount: 0,
     },
   });
 
-  //let patientABW = form.values.weightmeasurement == kg ? 
+  let patientABW =
+    form.values.weightmeasurement == "kg"
+      ? form.values.patientABW
+      : form.values.patientABW / 2.205;
+  let patientHeight =
+    form.values.heightmeasurement == "inches"
+      ? form.values.patientHeight
+      : form.values.patientHeight / 2.54;
+
   const calcIBW = (() => {
     let patientIBW = 0;
     if (form.values.patientGender == "Male") {
-      patientIBW = 50 + 2.3 * (form.values.patientHeight - 60);
+      patientIBW = 50 + 2.3 * (patientHeight - 60);
     } else if (form.values.patientGender == "Female") {
-      patientIBW = 45.5 + 2.3 * (form.values.patientHeight - 60);
+      patientIBW = 45.5 + 2.3 * (patientHeight - 60);
     } else {
       Error("IBW error");
     }
@@ -56,16 +67,16 @@ function App() {
   })();
 
   let patientdosingBW =
-    form.values.patientABW / calcIBW > 1.2
-      ? calcIBW + 0.25 * (form.values.patientABW - calcIBW)
-      : form.values.patientABW;
-  let patientObesity =
-    form.values.patientABW / calcIBW > 1.2 ? "Obese" : "Not Obese";
+    patientABW / calcIBW > 1.2
+      ? calcIBW + 0.25 * (patientABW - calcIBW)
+      : patientABW;
+  let patientObesity = patientABW / calcIBW > 1.2 ? "Obese" : "Not Obese";
   let patientBMI =
-    form.values.patientABW != 0 && form.values.patientHeight != 0
-      ? form.values.patientABW / (form.values.patientHeight / 39.37) ** 2
+    patientABW != 0 && patientHeight != 0
+      ? patientABW / (patientHeight / 39.37) ** 2
       : 0;
-  let initdisable = patientBMI == 0 || form.values.patientGender == "" ? true : false;
+  let initdisable =
+    patientBMI == 0 || form.values.patientGender == "" ? true : false;
 
   const minCalmark = (() => {
     return form.values.patientCaloricStats == "Standard"
@@ -117,25 +128,35 @@ function App() {
       )
     ].max;
 
-  let calcCalories = patientBMI<30 ? patientdosingBW * form.values.patientCaloricNeeds :
-  patientBMI>=30 && patientBMI<=50 ? form.values.patientABW*form.values.patientCaloricNeeds : patientBMI>50 ? calcIBW*form.values.patientCaloricNeeds : 0;
-  let calcproteinsintial = patientBMI<30 ? patientdosingBW * form.values.patientProteinNeeds : calcIBW * form.values.patientProteinNeeds
+  let calcCalories =
+    patientBMI < 30
+      ? patientdosingBW * form.values.patientCaloricNeeds
+      : patientBMI >= 30 && patientBMI <= 50
+      ? patientABW * form.values.patientCaloricNeeds
+      : patientBMI > 50
+      ? calcIBW * form.values.patientCaloricNeeds
+      : 0;
+  let calcproteinsintial =
+    patientBMI < 30
+      ? patientdosingBW * form.values.patientProteinNeeds
+      : calcIBW * form.values.patientProteinNeeds;
   let calcProteins = form.values.openAbd
-    ? calcproteinsintial +
-      (form.values.openAbdamount * form.values.openAbddose)
+    ? calcproteinsintial + form.values.openAbdamount * form.values.openAbddose
     : calcproteinsintial;
-
-  let calcFluids = patientdosingBW * form.values.patientFluidneeds;
+  let calcFluids = form.values.customVolume == true ? form.values.customVolumeamount : patientdosingBW * form.values.patientFluidneeds;
   let calcNonproteincal = calcCalories - calcProteins * 4;
   let calcLipidscal =
     calcNonproteincal * (form.values.patientLipidnonproteincal / 100);
+  let calcLipidsvol = form.values.propofol ? ((calcLipidscal)-(form.values.propofolrate*26.4))/2 :(calcLipidscal/2)
+  let calcLipidsvolscript = form.values.propofol && calcLipidsvol<=0 ?  "Lipids Satisfied by propofol infusion":calcLipidsvol + "mL (of 20% lipid fomulation)"
+  let calcLipidscalscript = form.values.propofol && calcLipidsvol<=0 ?  (form.values.propofolrate*26.4) +" kcal (of propofol infusion) " + Math.abs(calcLipidscal-(form.values.propofolrate*26.4))  +" kcal Excess"
+  :form.values.propofol?
+  
+  calcLipidscal-(form.values.propofolrate*26.4) +" kcal (of 20% lipid fomulation) " + (form.values.propofolrate*26.4) +" kcal (of propofol infusion)" :(calcLipidscal) +" kcal"
   let calcCarbohydratescal = calcCalories - (calcProteins * 4 + calcLipidscal);
   let calcGIR =
-    calcCarbohydratescal /
-    3.4 /
-    form.values.patientABW /
-    ((calcFluids / 100) * 60);
-
+    calcCarbohydratescal / 3.4 / patientABW / ((calcFluids / 100) * 60);
+  let lipidFrequency = Math.round((calcLipidscal * 3.5) / 250);
 
   return (
     <>
@@ -144,7 +165,7 @@ function App() {
           <NumberInput
             defaultValue={60}
             placeholder="Patient Weight"
-            label="Patient Weight in KG"
+            label={"Patient Weight in " + form.values.weightmeasurement}
             variant="filled"
             {...form.getInputProps("patientABW")}
             hideControls
@@ -163,7 +184,7 @@ function App() {
           <NumberInput
             defaultValue={60}
             placeholder="Patient Height"
-            label="Patient Height in Inches"
+            label={"Patient Height in " + form.values.heightmeasurement}
             variant="filled"
             {...form.getInputProps("patientHeight")}
             hideControls
@@ -291,8 +312,12 @@ function App() {
               { value: proteinmarksmax, label: proteinmarksmax },
             ]}
           />
-<br></br>
-          <Checkbox label="Open Abdomen" disabled={initdisable} {...form.getInputProps("openAbd")} />
+          <br></br>
+          <Checkbox
+            label="Open Abdomen"
+            disabled={initdisable}
+            {...form.getInputProps("openAbd")}
+          />
           <div hidden={!form.values.openAbd}>
             <NumberInput
               defaultValue={1}
@@ -321,111 +346,138 @@ function App() {
             />
           </div>
         </Grid.Col>
-        <Grid.Col span={6}>      <Slider
-        size="sm"
-        disabled={initdisable}
-        labelAlwaysOn
-        label={form.values.patientFluidneeds + " mL/kg"}
-        defaultValue={40}
-        min={30}
-        max={50}
-        step={0.5}
-        precision={3}
-        {...form.getInputProps("patientFluidneeds")}
-        marks={[
-          { value: 30, label: 30 },
-          { value: 50, label: 50 },
-        ]}
-      />
-      "{calcFluids}" </Grid.Col>
-        <Grid.Col span={6}>       <Slider
-        size="md"
-        disabled={initdisable}
-        labelAlwaysOn
-        label={form.values.patientLipidnonproteincal + " %"}
-        defaultValue={25}
-        min={20}
-        max={30}
-        step={0.5}
-        precision={3}
-        {...form.getInputProps("patientLipidnonproteincal")}
-        marks={[
-          { value: 20, label: 20 },
-          { value: 30, label: 30 },
-        ]}
-      />
-      <br></br>
-                <Checkbox label="Propofol" disabled={initdisable} {...form.getInputProps("propofol")} />
+        <Grid.Col span={6}>
+          {" "}
+          <Slider
+            size="sm"
+            disabled={initdisable ||form.values.customVolume}
+            labelAlwaysOn
+            label={form.values.patientFluidneeds + " mL/kg"}
+            defaultValue={40}
+            min={30}
+            max={50}
+            step={0.5}
+            precision={3}
+            {...form.getInputProps("patientFluidneeds")}
+            marks={[
+              { value: 30, label: 30 },
+              { value: 50, label: 50 },
+            ]}
+          />
+          "{calcFluids}"{" "}
+          <Checkbox
+            label="Custom Volume"
+            disabled={initdisable}
+            {...form.getInputProps("customVolume")}
+          />
+          <div hidden ={!form.values.customVolume}>
+          <NumberInput
+              defaultValue={0}
+              placeholder="in mL"
+              label="Total TPN Volume in mL"
+              variant="filled"
+              {...form.getInputProps("customVolumeamount")}
+              hideControls
+            /></div>
+        </Grid.Col>
+        <Grid.Col span={6}>
+          {" "}
+          <Slider
+            size="md"
+            disabled={initdisable}
+            labelAlwaysOn
+            label={form.values.patientLipidnonproteincal + " %"}
+            defaultValue={25}
+            min={20}
+            max={30}
+            step={0.5}
+            precision={3}
+            {...form.getInputProps("patientLipidnonproteincal")}
+            marks={[
+              { value: 20, label: 20 },
+              { value: 30, label: 30 },
+            ]}
+          />
+          <br></br>
+          <Checkbox
+            label="Propofol"
+            disabled={initdisable}
+            {...form.getInputProps("propofol")}
+          />
           <div hidden={!form.values.propofol}>
             <NumberInput
               defaultValue={0}
               placeholder="in mL"
-              label="Propofol administered in mL"
+              label="Propofol rate in mL/hr"
               variant="filled"
-              {...form.getInputProps("propofolvolume")}
+              {...form.getInputProps("propofolrate")}
               hideControls
             />
           </div>
- </Grid.Col>
+        </Grid.Col>
       </Grid>
       <Center px={30}>
-      <Table horizontalSpacing="sm" verticalSpacing="xs">
-      <thead>
-        <tr>
-          <th>Characteristic</th>
-          <th>Value</th>
-        </tr>
-      </thead>
-      <tbody>      
-      <tr>
-          <th>IBW</th>
-          <th>{calcIBW} kg</th>
-        </tr>  <tr>
-          <th>BMI</th>
-          <th>{patientBMI}</th>
-        </tr>
-        <tr>
-          <th>Dosing Weight</th>
-          <th>{patientdosingBW} kg</th>
-        </tr>
-        <tr>
-          <th>Obesity (>120% IBW)</th>
-          <th>{patientObesity}</th>
-        </tr>
-        </tbody>
-    </Table>       
-      <Table horizontalSpacing="sm" verticalSpacing="xs">
-      <thead>
-        <tr>
-          <th>Macroneutrient</th>
-          <th>Amount</th>
-          <th>Calories</th>
-        </tr>
-      </thead>
-      <tbody>        <tr>
-          <th>Carbohydrates</th>
-          <th>{calcCarbohydratescal/3.4} gm</th>
-          <th>{calcCarbohydratescal} kcal</th>
-        </tr><tr>
-          <th>Proteins</th>
-          <th>{calcProteins} gm</th>
-          <th>{calcProteins*4} kcal</th>
-        </tr><tr>
-          <th>Lipids</th>
-          <th>{calcLipidscal/2} mL (of 20% lipid fomulation)</th>
-          <th> {calcLipidscal} kcal</th>
-        </tr>
-        </tbody>
-    </Table>
-    </Center>
-
-    Actual Body Weight: {form.values.patientABW}
- Patient Height: {form.values.patientHeight}" "
-      {form.values.patientGender}" <br></br>"
-      {form.values.patientCaloricStats}" "{calcCalories}"
-
-
- "{calcGIR * 1000}"
+        <Table horizontalSpacing="sm" verticalSpacing="xs">
+          <thead>
+            <tr>
+              <th>Characteristic</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th>IBW</th>
+              <th>{calcIBW} kg</th>
+            </tr>{" "}
+            <tr>
+              <th>BMI</th>
+              <th>{patientBMI}</th>
+            </tr>
+            <tr>
+              <th>Dosing Weight</th>
+              <th>{patientdosingBW} kg</th>
+            </tr>
+            <tr>
+              <th>{"Obesity (>120% IBW)"}</th>
+              <th>{patientObesity}</th>
+            </tr>
+          </tbody>
+        </Table>
+        <Table horizontalSpacing="sm" verticalSpacing="xs">
+          <thead>
+            <tr>
+              <th>Macroneutrient</th>
+              <th>Amount</th>
+              <th>Calories</th>
+            </tr>
+          </thead>
+          <tbody>
+            {" "}
+            <tr>
+              <th>Carbohydrates</th>
+              <th>{calcCarbohydratescal / 3.4} gm</th>
+              <th>{calcCarbohydratescal} kcal</th>
+            </tr>
+            <tr>
+              <th>Proteins</th>
+              <th>{calcProteins} gm</th>
+              <th>{calcProteins * 4} kcal</th>
+            </tr>
+            <tr>
+              <th>Lipids</th>
+              <th>{calcLipidsvolscript}</th>
+              <th> {calcLipidscalscript}</th>
+            </tr>
+          </tbody>
+        </Table>
+      </Center>
+      Actual Body Weight: {patientABW}
+      <br></br>
+      Patient Height: {patientHeight}
+      <br></br>
+      Suggested Weekly Lipid frequency (20% 250mL): {lipidFrequency}
+      <br></br>
+      {form.values.patientGender} <br></br>" "{calcCalories}" "{calcGIR * 1000}"
     </>
   );
 }
