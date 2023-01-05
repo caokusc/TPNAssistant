@@ -1,7 +1,7 @@
 import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import "./App.css";
-import { NumberInput, Radio, SegmentedControl, Slider } from '@mantine/core';
+import { Checkbox, NumberInput, Radio, SegmentedControl, Slider } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { formatWithOptions } from "util";
 
@@ -20,6 +20,10 @@ function App() {
 
       patientProteinStats: "Maintenance",
       patientProteinNeeds: 0,
+
+      openAbd: false,
+      openAbddose: 0,
+      openAbdamount: 0,
     },
   })
   const calcIBW = (() => {
@@ -73,7 +77,7 @@ const proteinmarksmin = proMarks[proMarks.findIndex(element => element.stats ===
 const proteinmarksmax = proMarks[proMarks.findIndex(element => element.stats === form.values.patientProteinStats)].max
 
 let calcCalories = patientdosingBW*form.values.patientCaloricNeeds
-let calcProteins = patientdosingBW*form.values.patientProteinNeeds
+let calcProteins = form.values.openAbd ? (patientdosingBW*form.values.patientProteinNeeds)+(form.values.openAbdamount*form.values.openAbddose): patientdosingBW*form.values.patientProteinNeeds
 
 
   return (
@@ -173,7 +177,41 @@ let calcProteins = patientdosingBW*form.values.patientProteinNeeds
     />
      "{form.values.patientProteinStats}"
     "{calcProteins}"
+
+
+    <Checkbox
+      label="Open Abdomen"
+      {...form.getInputProps('openAbd')}
+    />
+    <div hidden ={!form.values.openAbd}>
+    <NumberInput
+        defaultValue={1}
+        placeholder="in L"
+        label="Amount Exudate lost"
+        variant="filled"
+        {...form.getInputProps('openAbdamount')}
+        hideControls />
+        
+        <Slider
+      size="sm"
+      labelAlwaysOn
+      label = {form.values.openAbddose + "gm/L"}
+      defaultValue={20}
+      min={15}
+      max={30}
+      step = {0.5}
+      precision = {3}
+      {...form.getInputProps('openAbddose')}
+      marks={[
+        { value: 15, label: 15 },
+        { value: 30, label: 30 },
+      ]}
+    />
+</div>
+
+
       </>
+
 
 
   );
