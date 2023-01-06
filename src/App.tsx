@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import "./App.css";
 import {
+  Button,
   Center,
   Checkbox,
   Grid,
@@ -10,6 +11,7 @@ import {
   SegmentedControl,
   Slider,
   Table,
+  Tabs,
   Tooltip,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
@@ -46,6 +48,11 @@ function App() {
       customVolume: false,
       customVolumeamount: 2000,
       infusionRate: 100,
+
+      sodiumMEQ: 0,
+      potassiumMEQ: 0,
+      magnesiumMEQ: 0,
+      calciumMEQ: 0,
     },
   });
 
@@ -151,7 +158,7 @@ function App() {
   let calcLipidsvolscript =
     form.values.propofol && calcLipidsvol <= 0
       ? "Lipids Satisfied by Propofol Infusion"
-      : Math.round(calcLipidsvol) + "mL (of 20% lipid fomulation)";
+      : Math.round(calcLipidsvol) + "mL (20% lipid fomulation)";
   let calcLipidscalscript =
     form.values.propofol && calcLipidsvol <= 0
       ? Math.round(form.values.propofolrate * 26.4) +
@@ -202,7 +209,7 @@ function App() {
     }
   }, [patientProteinNeeds, proteinmarksmin, proteinmarksmax]);
 
-
+let calcOsmolarity = ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsvol*0.14)/calcFluids) + ( (form.values.calciumMEQ*1.4) + (form.values.magnesiumMEQ*1) + (form.values.potassiumMEQ*2)+ (form.values.sodiumMEQ*2))/1000
   return (
     <>
       <Grid>
@@ -267,8 +274,9 @@ function App() {
             name="Calories"
             orientation="vertical"
             label="Select Caloric Requirements"
-            spacing="xs"
-            offset="sm"
+            spacing={5}
+            offset="xs"
+            size="sm"
             defaultValue="Standard"
             {...form.getInputProps("patientCaloricStats")}
           >
@@ -302,7 +310,7 @@ function App() {
           </Radio.Group>
           <br></br>
           <Slider
-            size="lg"
+            size="md"
             labelAlwaysOn
             label={form.values.patientCaloricNeeds + " kcal/kg"}
             step={0.5}
@@ -321,8 +329,9 @@ function App() {
             name="Proteins"
             orientation="vertical"
             label="Select Protein Requirements"
-            spacing="xs"
-            offset="sm"
+            spacing={2}
+            offset={2}
+            size="sm"
             {...form.getInputProps("patientProteinStats")}
           >
             <Tooltip label="1.2-1.5 gm/kg/day">
@@ -367,7 +376,7 @@ function App() {
           </Radio.Group>
           <br></br>
           <Slider
-            size="lg"
+            size="md"
             disabled={initdisable}
             labelAlwaysOn
             label={form.values.patientProteinNeeds + " gm/kg"}
@@ -501,58 +510,10 @@ function App() {
             variant="filled"
             {...form.getInputProps("infusionRate")}
             hideControls
-          /></Tooltip><div hidden={initdisable} >GIR: "{Math.round(calcGIR * 100000)/100} mg/kg/min"</div>
+          /></Tooltip><div hidden={initdisable} >GIR: {Math.round(calcGIR * 100000)/100} mg/kg/min</div>
 
         </Grid.Col>
       </Grid>
-      <br></br>
-      <Center px={30}>
-        <Table
-        highlightOnHover
-          horizontalSpacing="sm"
-          verticalSpacing="xs"
-          withColumnBorders
-          withBorder
-        >
-          <thead>
-            <tr>
-              <th>Characteristic</th>
-              <th>Value</th>
-            </tr>
-          </thead>
-          <tbody>
-                          <Tooltip.Floating position="right" 
-                    width={150}
-                    multiline
-              label="Male: [50kg + 2.3 x (Height(Inches) - 60]    Female: [45.5kg + 2.3 x (Height(Inches) - 60]">
-            <tr>
-              <th>IBW</th>
-<th>{Math.round(calcIBW * 10) / 10} kg</th>
-            </tr>
-            </Tooltip.Floating>
-
-            <tr>
-              <th>BMI</th>
-              <th>{Math.round(patientBMI * 10) / 10} kg/m<sup>2</sup></th>
-            </tr>
-<Tooltip.Floating label={dosingWeightDescrition}>
-            <tr>
-              <th>Dosing Weight</th>
-              <th>{Math.round(patientdosingBW * 10) / 10} kg</th>
-            </tr>
-</Tooltip.Floating>
-
-            <tr>
-              <th>{"Obesity (>120% IBW)"}</th>
-              <th>{patientObesity}</th>
-            </tr>
-            <tr>
-              <th>TPN Volume</th>
-              <th>{Math.round(calcFluids / 10) * 10}</th>
-            </tr>
-          </tbody>
-        </Table>
-      </Center>
       <Center px={30}>
         <Table
           horizontalSpacing="sm"
@@ -614,9 +575,115 @@ function App() {
             </tr>
           </tbody>
         </Table>
+        
       </Center>
-      Suggested Weekly Lipid frequency (20% 250mL): {lipidFrequency}
+<Center>   <b>   TPN Volume: {Math.round(calcFluids / 10) * 10} mL      <br></br>
+      Suggested Weekly Lipid frequency (20% 250mL): {lipidFrequency}</b> </Center>
+
       <br></br>
+                           <Tabs variant="pills" orientation="vertical" defaultValue="basic info">
+      <Tabs.List>
+        <Tabs.Tab value="basic info" >Basic Info</Tabs.Tab>
+        <Tabs.Tab value="osmolarity" >Osmolarity</Tabs.Tab>
+        <Tabs.Tab value="settings" >Resources</Tabs.Tab>
+      </Tabs.List>
+
+      <Tabs.Panel value="basic info" pl="xs">
+      <Center px={30}>
+
+        <Table
+        highlightOnHover
+          horizontalSpacing="sm"
+          verticalSpacing="xs"
+          withColumnBorders
+          withBorder
+
+        >
+
+          <thead>
+            <tr>
+              <th>Characteristic</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+          <Tooltip.Floating position="right" 
+                    width={150}
+                    multiline
+              label="Male: [50kg + 2.3 x (Height(Inches) - 60]    Female: [45.5kg + 2.3 x (Height(Inches) - 60]">
+            <tr>
+              <th>IBW</th>
+<th>{Math.round(calcIBW * 10) / 10} kg</th>
+            </tr>
+            </Tooltip.Floating>
+
+            <tr>
+              <th>BMI</th>
+              <th>{Math.round(patientBMI * 10) / 10} kg/m<sup>2</sup></th>
+            </tr>
+<Tooltip.Floating label={dosingWeightDescrition}>
+            <tr>
+              <th>Dosing Weight</th>
+              <th>{Math.round(patientdosingBW * 10) / 10} kg</th>
+            </tr>
+</Tooltip.Floating>
+
+            <tr>
+              <th>{"Obesity (>120% IBW)"}</th>
+              <th>{patientObesity}</th>
+            </tr>
+          </tbody>
+        </Table>
+      </Center>
+      
+      </Tabs.Panel>
+
+      <Tabs.Panel value="osmolarity" pl="xs">
+        <Grid> <Grid.Col span={6}> 
+      <NumberInput
+            defaultValue={0}
+            placeholder="in mEq"
+            label="Na Chloride, Acetate or Phosphate salt in mEq"
+            disabled={initdisable}
+            variant="filled"
+            {...form.getInputProps("sodiumMEQ")}
+            hideControls
+          />
+      <NumberInput
+            defaultValue={0}
+            placeholder="in mEq"
+            label="K Chloride, Acetate or Phosphate salt in mEq"
+            disabled={initdisable}
+            variant="filled"
+            {...form.getInputProps("potassiumMEQ")}
+            hideControls
+          />
+                <NumberInput
+            defaultValue={0}
+            placeholder="in mEq"
+            label="Magnesium sulfate in mEq"
+            disabled={initdisable}
+            variant="filled"
+            {...form.getInputProps("magnesiumMEQ")}
+            hideControls
+          />
+                <NumberInput
+            defaultValue={0}
+            placeholder="in mEq"
+            label="Calcium Gluconate in mEq"
+            disabled={initdisable}
+            variant="filled"
+            {...form.getInputProps("calciumMEQ")}
+            hideControls
+          /></Grid.Col>
+          <br></br>
+Estimated Osmolarity: {Math.round(calcOsmolarity*100000)/100} mOsm/L </Grid>
+      </Tabs.Panel>
+
+      <Tabs.Panel value="resources" pl="xs">
+      </Tabs.Panel>
+    </Tabs>
+
     </>
   );
 }
