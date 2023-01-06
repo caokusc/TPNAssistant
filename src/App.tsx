@@ -15,6 +15,7 @@ import {
 import { useForm } from "@mantine/form";
 import { formatWithOptions } from "util";
 import { useShallowEffect } from "@mantine/hooks";
+import { TooltipFloating } from "@mantine/core/lib/Tooltip/TooltipFloating/TooltipFloating";
 
 type Gender = "Male" | "Female" | "";
 
@@ -35,7 +36,7 @@ function App() {
       patientProteinNeeds: 0,
 
       openAbd: false,
-      openAbddose: 0,
+      openAbddose: 20,
       openAbdamount: 0,
 
       patientFluidneeds: 40,
@@ -43,7 +44,7 @@ function App() {
       propofol: false,
       propofolrate: 0,
       customVolume: false,
-      customVolumeamount: 0,
+      customVolumeamount: 2000,
       infusionRate: 100,
     },
   });
@@ -70,9 +71,9 @@ function App() {
   })();
 
   let patientdosingBW =
-    patientABW / calcIBW > 1.2
-      ? calcIBW + 0.25 * (patientABW - calcIBW)
-      : patientABW;
+  (patientABW / calcIBW) > 1.2
+  ? calcIBW + (0.25 * (patientABW - calcIBW))
+  : patientABW;
   let patientObesity = patientABW / calcIBW > 1.2 ? "Obese" : "Not Obese";
   let patientBMI =
     patientABW != 0 && patientHeight != 0
@@ -174,6 +175,10 @@ function App() {
   : form.values.propofol
   ? Math.round(((calcLipidscal - form.values.propofolrate * 26.4)*3.5)/250)
   : Math.round((calcLipidscal * 3.5) / 250);
+
+  let dosingWeightDescrition =     (patientABW / calcIBW) > 1.2
+  ? "(>120% IBW): Uses adjusted body weight unless specified"
+  : "(<120% IBW): Uses actual body weight";
   
 
   const patientCaloricNeeds = form.values.patientCaloricNeeds;
@@ -197,10 +202,12 @@ function App() {
     }
   }, [patientProteinNeeds, proteinmarksmin, proteinmarksmax]);
 
+
   return (
     <>
       <Grid>
-        <Grid.Col span={4}>
+
+        <Grid.Col span={4} px={20}>
           <NumberInput
             defaultValue={60}
             placeholder="Patient Weight"
@@ -220,7 +227,7 @@ function App() {
             ]}
           />
         </Grid.Col>
-        <Grid.Col span={4}>
+        <Grid.Col span={4} px={20}>
           <NumberInput
             defaultValue={60}
             placeholder="Patient Height"
@@ -391,7 +398,7 @@ function App() {
               {...form.getInputProps("openAbdamount")}
               hideControls
             />
-            Additional protein for lost exudate
+            Additional protein for lost exudate per liter
             <Slider
               size="sm"
               disabled={initdisable}
@@ -438,7 +445,7 @@ function App() {
           />
           <div hidden={!form.values.customVolume}>
             <NumberInput
-              defaultValue={0}
+              defaultValue={2000}
               placeholder="in mL"
               label="Total TPN Volume in mL"
               variant="filled"
@@ -501,6 +508,7 @@ function App() {
       <br></br>
       <Center px={30}>
         <Table
+        highlightOnHover
           horizontalSpacing="sm"
           verticalSpacing="xs"
           withColumnBorders
@@ -513,18 +521,27 @@ function App() {
             </tr>
           </thead>
           <tbody>
+                          <Tooltip.Floating position="right" 
+                    width={150}
+                    multiline
+              label="Male: [50kg + 2.3 x (Height(Inches) - 60]    Female: [45.5kg + 2.3 x (Height(Inches) - 60]">
             <tr>
               <th>IBW</th>
-              <th>{Math.round(calcIBW * 10) / 10} kg</th>
-            </tr>{" "}
+<th>{Math.round(calcIBW * 10) / 10} kg</th>
+            </tr>
+            </Tooltip.Floating>
+
             <tr>
               <th>BMI</th>
-              <th>{Math.round(patientBMI * 10) / 10}</th>
+              <th>{Math.round(patientBMI * 10) / 10} kg/m<sup>2</sup></th>
             </tr>
+<Tooltip.Floating label={dosingWeightDescrition}>
             <tr>
               <th>Dosing Weight</th>
               <th>{Math.round(patientdosingBW * 10) / 10} kg</th>
             </tr>
+</Tooltip.Floating>
+
             <tr>
               <th>{"Obesity (>120% IBW)"}</th>
               <th>{patientObesity}</th>
@@ -598,7 +615,6 @@ function App() {
           </tbody>
         </Table>
       </Center>
-      <br></br>
       Suggested Weekly Lipid frequency (20% 250mL): {lipidFrequency}
       <br></br>
     </>
