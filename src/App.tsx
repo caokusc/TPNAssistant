@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import reactLogo from "./assets/react.svg";
 import "./App.css";
 import {
+  Box,
   Button,
   Center,
   Checkbox,
@@ -15,9 +15,6 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { formatWithOptions } from "util";
-import { useShallowEffect } from "@mantine/hooks";
-import { TooltipFloating } from "@mantine/core/lib/Tooltip/TooltipFloating/TooltipFloating";
 
 type Gender = "Male" | "Female" | "";
 
@@ -209,7 +206,8 @@ function App() {
     }
   }, [patientProteinNeeds, proteinmarksmin, proteinmarksmax]);
 
-let calcOsmolarity = ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsvol*0.14)/calcFluids) + ( (form.values.calciumMEQ*1.4) + (form.values.magnesiumMEQ*1) + (form.values.potassiumMEQ*2)+ (form.values.sodiumMEQ*2))/1000
+let calcOsmolarity = calcLipidsvol>0 ? ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsvol*0.14)/calcFluids) + ( (form.values.calciumMEQ*1.4) + (form.values.magnesiumMEQ*1) + (form.values.potassiumMEQ*2)+ (form.values.sodiumMEQ*2))/1000 :  ((calcProteins*10 + calcCarbohydratescal*1.47)/calcFluids) + ( (form.values.calciumMEQ*1.4) + (form.values.magnesiumMEQ*1) + (form.values.potassiumMEQ*2)+ (form.values.sodiumMEQ*2))/1000
+  
   return (
     <>
       <Grid>
@@ -225,7 +223,11 @@ let calcOsmolarity = ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsv
           />
         </Grid.Col>
         <Grid.Col span={2}>
+
           <SegmentedControl
+                          sx={(theme) => ({
+                            backgroundColor: theme.colors.gray[3],
+                          })}
           orientation="vertical"
             {...form.getInputProps("weightmeasurement")}
             data={[
@@ -233,6 +235,7 @@ let calcOsmolarity = ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsv
               { label: "Lb", value: "lb" },
             ]}
           />
+
         </Grid.Col>
         <Grid.Col span={4} px={20}>
           <NumberInput
@@ -246,6 +249,9 @@ let calcOsmolarity = ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsv
         </Grid.Col>
         <Grid.Col span={2}>
           <SegmentedControl
+                          sx={(theme) => ({
+                            backgroundColor: theme.colors.gray[3],
+                          })}
           orientation="vertical"
             {...form.getInputProps("heightmeasurement")}
             data={[
@@ -256,16 +262,27 @@ let calcOsmolarity = ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsv
         </Grid.Col>
         <Grid.Col span={12}>
           <Center>
-
+          <Box
+                sx={(theme) => ({
+                  backgroundColor: theme.colors.gray[6],
+                  textAlign: 'center',
+                  padding: 1,
+                  borderRadius: theme.radius.md,
+                })}
+          >
             <SegmentedControl
+                            sx={(theme) => ({
+                              backgroundColor: theme.colors.gray[2],
+                              borderRadius: theme.radius.md,
+                            })}
+            color = {form.values.patientGender == "Male" ? "blue" : "pink"}
             size="md"
-            color="blue"
               {...form.getInputProps("patientGender")}
               data={[
                 { label: "Male", value: "Male" },
                 { label: "Female", value: "Female" },
               ]}
-            />
+            /></Box>
           </Center>        <hr></hr>
         </Grid.Col>
 
@@ -429,7 +446,7 @@ let calcOsmolarity = ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsv
         <Grid.Col span={12}>             <hr></hr>     </Grid.Col>
         <Grid.Col span={6} px={50}>
           {" "}
-          Fluid Needs
+          Fluid Needs: TPN Volume by Weight
           <Slider
             size="sm"
             disabled={initdisable || form.values.customVolume}
@@ -585,7 +602,7 @@ let calcOsmolarity = ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsv
       <Tabs.List>
         <Tabs.Tab value="basic info" >Basic Info</Tabs.Tab>
         <Tabs.Tab value="osmolarity" >Osmolarity</Tabs.Tab>
-        <Tabs.Tab value="settings" >Resources</Tabs.Tab>
+        <Tabs.Tab value="formula" >Formula</Tabs.Tab>
       </Tabs.List>
 
       <Tabs.Panel value="basic info" pl="xs">
@@ -643,7 +660,7 @@ let calcOsmolarity = ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsv
       <NumberInput
             defaultValue={0}
             placeholder="in mEq"
-            label="Na Chloride, Acetate or Phosphate salt in mEq"
+            label="Na Chloride, Acetate or Phosphate salt in mEq/L"
             disabled={initdisable}
             variant="filled"
             {...form.getInputProps("sodiumMEQ")}
@@ -652,7 +669,7 @@ let calcOsmolarity = ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsv
       <NumberInput
             defaultValue={0}
             placeholder="in mEq"
-            label="K Chloride, Acetate or Phosphate salt in mEq"
+            label="K Chloride, Acetate or Phosphate salt in mEq/L"
             disabled={initdisable}
             variant="filled"
             {...form.getInputProps("potassiumMEQ")}
@@ -661,7 +678,7 @@ let calcOsmolarity = ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsv
                 <NumberInput
             defaultValue={0}
             placeholder="in mEq"
-            label="Magnesium sulfate in mEq"
+            label="Magnesium sulfate in mEq/L"
             disabled={initdisable}
             variant="filled"
             {...form.getInputProps("magnesiumMEQ")}
@@ -670,7 +687,7 @@ let calcOsmolarity = ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsv
                 <NumberInput
             defaultValue={0}
             placeholder="in mEq"
-            label="Calcium Gluconate in mEq"
+            label="Calcium Gluconate in mEq/L"
             disabled={initdisable}
             variant="filled"
             {...form.getInputProps("calciumMEQ")}
@@ -679,9 +696,25 @@ let calcOsmolarity = ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsv
           <br></br>
 Estimated Osmolarity: {Math.round(calcOsmolarity*100000)/100} mOsm/L </Grid>
       </Tabs.Panel>
+<Tabs.Panel value="formula" pl="xs"> 
+<Center> 
+{'Ideal Body Weight (IBW): Male: [50kg + 2.3 x (Height(Inches) - 60]   '}          <br></br>
+{'Ideal Body Weight (IBW):  Female: [45.5kg + 2.3 x (Height(Inches) - 60]  '}         <br></br>           <br></br>
 
-      <Tabs.Panel value="resources" pl="xs">
-      </Tabs.Panel>
+         {'Adjusted Body Weight (AjBW): IBW + 0.25 x (Height(Inches)-IBW)'}  <br></br>
+{"Dosing Body Weight: Actual BW [If ABW < 120% IBW]" }<br></br>
+{"Dosing Body Weight: Adjusted BW [If ABW > 120% IBW]" }<br></br>
+ {"Body Mass Index (BMI): Weight(kg) / Height(m)^2"} <br></br> <br></br>
+
+ {"Dextrose/Carbohydrate/Sugar = 3.4kcal/g"} <br></br>
+ {"Proteins = 4kcal/g"} <br></br>
+ {"Lipids (20% Concentration)= 2kcal/mL"} <br></br>
+ {"Propofol (10mg/ml Concentration)= 1.1kcal/mL"} <br></br> <br></br>
+
+ {"Kg = 2.205 x lb"} <br></br>
+ {"Inches = 2.54 x cm"} <br></br>
+</Center>
+</Tabs.Panel>
     </Tabs>
 
     </>
