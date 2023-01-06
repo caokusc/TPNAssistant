@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import "./App.css";
 import {
@@ -14,6 +14,7 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { formatWithOptions } from "util";
+import { useShallowEffect } from "@mantine/hooks";
 
 type Gender = "Male" | "Female" | "";
 
@@ -93,8 +94,9 @@ function App() {
       ? 22
       : 0;
   })();
-  const maxCalmark = (() => {
-    return form.values.patientCaloricStats == "Standard"
+
+  const maxCalmark =
+    form.values.patientCaloricStats == "Standard"
       ? 30
       : form.values.patientCaloricStats == "Severe"
       ? 40
@@ -105,7 +107,6 @@ function App() {
       : form.values.patientCaloricStats == "Obese1"
       ? 25
       : 0;
-  })();
 
   const proMarks = [
     { stats: "Maintenance", min: 1.2, max: 1.5 },
@@ -117,18 +118,9 @@ function App() {
     { stats: "Burn", min: 1.5, max: 2 },
   ];
 
-  const proteinmarksmin =
-    proMarks[
-      proMarks.findIndex(
-        (element) => element.stats === form.values.patientProteinStats
-      )
-    ].min;
-  const proteinmarksmax =
-    proMarks[
-      proMarks.findIndex(
-        (element) => element.stats === form.values.patientProteinStats
-      )
-    ].max;
+  const proteinmarks = proMarks.find((element) => element.stats === form.values.patientProteinStats);
+  const proteinmarksmin = proteinmarks?.min!;
+  const proteinmarksmax = proteinmarks?.max!;
 
   let calcCalories =
     patientBMI < 30
@@ -145,20 +137,65 @@ function App() {
   let calcProteins = form.values.openAbd
     ? calcproteinsintial + form.values.openAbdamount * form.values.openAbddose
     : calcproteinsintial;
-  let calcFluids = form.values.customVolume == true ? form.values.customVolumeamount : patientdosingBW * form.values.patientFluidneeds;
+  let calcFluids =
+    form.values.customVolume == true
+      ? form.values.customVolumeamount
+      : patientdosingBW * form.values.patientFluidneeds;
   let calcNonproteincal = calcCalories - calcProteins * 4;
   let calcLipidscal =
     calcNonproteincal * (form.values.patientLipidnonproteincal / 100);
-  let calcLipidsvol = form.values.propofol ? ((calcLipidscal)-(form.values.propofolrate*26.4))/2 :(calcLipidscal/2)
-  let calcLipidsvolscript = form.values.propofol && calcLipidsvol<=0 ?  "Lipids Satisfied by propofol infusion":Math.round(calcLipidsvol) + "mL (of 20% lipid fomulation)"
-  let calcLipidscalscript = form.values.propofol && calcLipidsvol<=0 ?  Math.round(form.values.propofolrate*26.4) +" kcal (of propofol infusion)" +Math.round(Math.abs(calcLipidscal-(form.values.propofolrate*26.4)))  +" kcal Excess"
-  :form.values.propofol?
-  
-  Math.round(calcLipidscal-(form.values.propofolrate*26.4)) +" kcal (of 20% lipid fomulation) " + Math.round(form.values.propofolrate*26.4) +" kcal (of propofol infusion)" :Math.round(calcLipidscal) +" kcal"
+  let calcLipidsvol = form.values.propofol
+    ? (calcLipidscal - form.values.propofolrate * 26.4) / 2
+    : calcLipidscal / 2;
+  let calcLipidsvolscript =
+    form.values.propofol && calcLipidsvol <= 0
+      ? "Lipids Satisfied by Propofol Infusion"
+      : Math.round(calcLipidsvol) + "mL (of 20% lipid fomulation)";
+  let calcLipidscalscript =
+    form.values.propofol && calcLipidsvol <= 0
+      ? Math.round(form.values.propofolrate * 26.4) +
+        " kcal (of propofol infusion)" +
+        Math.round(Math.abs(calcLipidscal - form.values.propofolrate * 26.4)) +
+        " kcal Excess"
+      : form.values.propofol
+      ? Math.round(calcLipidscal - form.values.propofolrate * 26.4) +
+        " kcal (of 20% lipid fomulation) " +
+        Math.round(form.values.propofolrate * 26.4) +
+        " kcal (of propofol infusion)"
+      : Math.round(calcLipidscal) + " kcal";
   let calcCarbohydratescal = calcCalories - (calcProteins * 4 + calcLipidscal);
   let calcGIR =
-    calcCarbohydratescal / 3.4 / patientABW / ((calcFluids / form.values.infusionRate) * 60);
-  let lipidFrequency = Math.round((calcLipidscal * 3.5) / 250);
+    calcCarbohydratescal /
+    3.4 /
+    patientABW /
+    ((calcFluids / form.values.infusionRate) * 60);
+  let lipidFrequency =     form.values.propofol && calcLipidsvol <= 0
+  ? "Lipids Satisfied by Propofol Infusion"
+  : form.values.propofol
+  ? Math.round(((calcLipidscal - form.values.propofolrate * 26.4)*3.5)/250)
+  : Math.round((calcLipidscal * 3.5) / 250);
+  
+
+  const patientCaloricNeeds = form.values.patientCaloricNeeds;
+  const patientProteinNeeds = form.values.patientProteinNeeds;
+
+  useEffect(() => {
+    if (patientCaloricNeeds < minCalmark){
+      form.setValues({ patientCaloricNeeds: minCalmark });
+    }
+    else if (patientCaloricNeeds > maxCalmark){
+      form.setValues({ patientCaloricNeeds: maxCalmark });
+    }
+  }, [patientCaloricNeeds, minCalmark, maxCalmark]);
+
+  useEffect(() => {
+    if (patientProteinNeeds < proteinmarksmin){
+      form.setValues({ patientProteinNeeds: proteinmarksmin });
+    }
+    else if (patientProteinNeeds > proteinmarksmax){
+      form.setValues({ patientProteinNeeds: proteinmarksmax });
+    }
+  }, [patientProteinNeeds, proteinmarksmin, proteinmarksmax]);
 
   return (
     <>
@@ -175,6 +212,7 @@ function App() {
         </Grid.Col>
         <Grid.Col span={2}>
           <SegmentedControl
+          orientation="vertical"
             {...form.getInputProps("weightmeasurement")}
             data={[
               { label: "Kg", value: "kg" },
@@ -194,6 +232,7 @@ function App() {
         </Grid.Col>
         <Grid.Col span={2}>
           <SegmentedControl
+          orientation="vertical"
             {...form.getInputProps("heightmeasurement")}
             data={[
               { label: "cm", value: "cm" },
@@ -201,16 +240,22 @@ function App() {
             ]}
           />
         </Grid.Col>
-        <Grid.Col span={12}><Center>          <SegmentedControl
-            {...form.getInputProps("patientGender")}
-            data={[
-              { label: "Male", value: "Male" },
-              { label: "Female", value: "Female" },
-            ]}
-          /></Center>
+        <Grid.Col span={12}>
+          <Center>
 
+            <SegmentedControl
+            size="md"
+            color="blue"
+              {...form.getInputProps("patientGender")}
+              data={[
+                { label: "Male", value: "Male" },
+                { label: "Female", value: "Female" },
+              ]}
+            />
+          </Center>        <hr></hr>
         </Grid.Col>
-        <Grid.Col span={6}>
+
+        <Grid.Col span={6} px={50}>
           <Radio.Group
             name="Calories"
             orientation="vertical"
@@ -220,29 +265,35 @@ function App() {
             defaultValue="Standard"
             {...form.getInputProps("patientCaloricStats")}
           >
-<Tooltip label= "25-30 kcal/kg/day"><Radio value="Standard" label="Standard" disabled={initdisable} /></Tooltip>
+            <Tooltip label="25-30 kcal/kg/day">
+              <Radio value="Standard" label="Standard" disabled={initdisable} />
+            </Tooltip>
+            <Tooltip label="30-40 kcal/kg/day"> 
             <Radio
               value="Severe"
               label="Severe Inujry"
               disabled={initdisable}
-            />
+            /></Tooltip>
+                        <Tooltip label="45-55 kcal/kg/day"> 
             <Radio
               value="Extensive"
               label="Extensive Trauma/Burn"
               disabled={initdisable}
-            />
+            /></Tooltip>
+                        <Tooltip label="11-14 kcal/kg/day by ABW"> 
             <Radio
               value="Obese"
               label="Obese and Critical Illness (BMI 30-50kg/m^2)"
               disabled={patientBMI > 50 || patientBMI < 30 || initdisable}
-            />
+            /></Tooltip>
+                        <Tooltip label="22-25 kcal/kg/day by IBW"> 
             <Radio
               value="Obese2"
               label="Obese and Critical Illness (BMI >50kg/m^2)"
               disabled={patientBMI < 50 || initdisable}
-            />
+            /></Tooltip>
           </Radio.Group>
-<br></br>
+          <br></br>
           <Slider
             size="lg"
             labelAlwaysOn
@@ -258,7 +309,7 @@ function App() {
             ]}
           />
         </Grid.Col>
-        <Grid.Col span={6}>
+        <Grid.Col span={6} px={50}>
           <Radio.Group
             name="Proteins"
             orientation="vertical"
@@ -267,37 +318,45 @@ function App() {
             offset="sm"
             {...form.getInputProps("patientProteinStats")}
           >
-            <Tooltip label="1.2-1.5 gm/kg/day"><Radio
-              value="Maintenance"
-              label="Standard"
-              disabled={initdisable}
-            /></Tooltip>
+            <Tooltip label="1.2-1.5 gm/kg/day">
+              <Radio
+                value="Maintenance"
+                label="Standard"
+                disabled={initdisable}
+              />
+            </Tooltip>
+            <Tooltip label="1.2-2 gm/kg/day"> 
             <Radio
               value="Crit1"
               label="Critical Illness (BMI <30kg/m^2)"
               disabled={initdisable || patientBMI > 30}
-            />
+            /></Tooltip>
+                        <Tooltip label="2 gm/kg/day by IBW"> 
             <Radio
               value="Crit2"
               label="Critical Illness (BMI 30-40kg/m^2)"
               disabled={patientBMI > 40 || patientBMI < 30 || initdisable}
-            />
+            /></Tooltip>
+                        <Tooltip label="2.5 gm/kg/day by IBW"> 
             <Radio
               value="Crit3"
               label="Critical Illness (BMI >40kg/m^2)"
               disabled={patientBMI < 40 || initdisable}
-            />
+            /></Tooltip>
+                        <Tooltip label="0.6-0.8 gm/kg/day(Not on HD, GFR <30m)"> 
             <Radio
               value="CKD1"
               label="Renal Failure/CKD"
               disabled={initdisable}
-            />
+            /></Tooltip>
+                        <Tooltip label="1.2-2.5 gm/kg/day"> 
             <Radio
               value="CKD2"
               label="Renal Failure/CKD with Dialysis"
               disabled={initdisable}
-            />
-            <Radio value="Burn" label="Burn Injury" disabled={initdisable} />
+            /></Tooltip>
+                        <Tooltip label="1.5-2 gm/kg/day"> 
+            <Radio value="Burn" label="Burn Injury" disabled={initdisable} /></Tooltip>
           </Radio.Group>
           <br></br>
           <Slider
@@ -316,11 +375,13 @@ function App() {
             ]}
           />
           <br></br>
+          <Tooltip label="Additional 15-30 gm protein per liter exudate lost"> 
           <Checkbox
             label="Open Abdomen"
             disabled={initdisable}
             {...form.getInputProps("openAbd")}
           />
+</Tooltip>
           <div hidden={!form.values.openAbd}>
             <NumberInput
               defaultValue={1}
@@ -330,7 +391,7 @@ function App() {
               {...form.getInputProps("openAbdamount")}
               hideControls
             />
-Additional protein for lost exudate
+            Additional protein for lost exudate
             <Slider
               size="sm"
               disabled={initdisable}
@@ -349,12 +410,13 @@ Additional protein for lost exudate
             <br></br>
           </div>
         </Grid.Col>
-        <Grid.Col span={6}>
+        <Grid.Col span={12}>             <hr></hr>     </Grid.Col>
+        <Grid.Col span={6} px={50}>
           {" "}
-            Fluid Needs
+          Fluid Needs
           <Slider
             size="sm"
-            disabled={initdisable ||form.values.customVolume}
+            disabled={initdisable || form.values.customVolume}
             labelAlwaysOn
             label={form.values.patientFluidneeds + " mL/kg"}
             defaultValue={40}
@@ -374,17 +436,18 @@ Additional protein for lost exudate
             disabled={initdisable}
             {...form.getInputProps("customVolume")}
           />
-          <div hidden ={!form.values.customVolume}>
-          <NumberInput
+          <div hidden={!form.values.customVolume}>
+            <NumberInput
               defaultValue={0}
               placeholder="in mL"
               label="Total TPN Volume in mL"
               variant="filled"
               {...form.getInputProps("customVolumeamount")}
               hideControls
-            /></div>
+            />
+          </div>
         </Grid.Col>
-        <Grid.Col span={6}>
+        <Grid.Col span={6} px={50}>
           {" "}
           % Lipids from Nonprotein Calories
           <Slider
@@ -404,11 +467,12 @@ Additional protein for lost exudate
             ]}
           />
           <br></br>
+          <Tooltip label ="Propofol 10mg/ml contains 1.1 kcal/ml"> 
           <Checkbox
             label="Propofol"
             disabled={initdisable}
             {...form.getInputProps("propofol")}
-          />
+          /></Tooltip>
           <div hidden={!form.values.propofol}>
             <NumberInput
               defaultValue={0}
@@ -419,20 +483,29 @@ Additional protein for lost exudate
               hideControls
             />
           </div>
+        </Grid.Col>
+        <Grid.Col span={6} px={50}>
+          <Tooltip label="Used in GIR estimate"> 
+          <NumberInput
+            defaultValue={100}
+            placeholder="in mL"
+            label="Infusion rate in mL/hr"
+            disabled={initdisable}
+            variant="filled"
+            {...form.getInputProps("infusionRate")}
+            hideControls
+          /></Tooltip><div hidden={initdisable} >GIR: "{Math.round(calcGIR * 100000)/100} mg/kg/min"</div>
 
-        </Grid.Col>          <Grid.Col span={6}>          <NumberInput
-              defaultValue={100}
-              placeholder="in mL"
-              label="Infusion rate in mL/hr"
-              disabled={initdisable}
-              variant="filled"
-              {...form.getInputProps("infusionRate")}
-              hideControls
-            /> </Grid.Col>
+        </Grid.Col>
       </Grid>
       <br></br>
       <Center px={30}>
-        <Table horizontalSpacing="sm" verticalSpacing="xs" withColumnBorders withBorder>
+        <Table
+          horizontalSpacing="sm"
+          verticalSpacing="xs"
+          withColumnBorders
+          withBorder
+        >
           <thead>
             <tr>
               <th>Characteristic</th>
@@ -442,15 +515,15 @@ Additional protein for lost exudate
           <tbody>
             <tr>
               <th>IBW</th>
-              <th>{Math.round(calcIBW*10)/10} kg</th>
+              <th>{Math.round(calcIBW * 10) / 10} kg</th>
             </tr>{" "}
             <tr>
               <th>BMI</th>
-              <th>{Math.round(patientBMI*10)/10}</th>
+              <th>{Math.round(patientBMI * 10) / 10}</th>
             </tr>
             <tr>
               <th>Dosing Weight</th>
-              <th>{Math.round(patientdosingBW*10)/10} kg</th>
+              <th>{Math.round(patientdosingBW * 10) / 10} kg</th>
             </tr>
             <tr>
               <th>{"Obesity (>120% IBW)"}</th>
@@ -458,13 +531,18 @@ Additional protein for lost exudate
             </tr>
             <tr>
               <th>TPN Volume</th>
-              <th>{Math.round(calcFluids/10)*10}</th>
+              <th>{Math.round(calcFluids / 10) * 10}</th>
             </tr>
           </tbody>
         </Table>
-        </Center>
-        <Center px={30}>
-        <Table horizontalSpacing="sm" verticalSpacing="xs" withColumnBorders withBorder>
+      </Center>
+      <Center px={30}>
+        <Table
+          horizontalSpacing="sm"
+          verticalSpacing="xs"
+          withColumnBorders
+          withBorder
+        >
           <thead>
             <tr>
               <th>Macronutrient</th>
@@ -478,32 +556,44 @@ Additional protein for lost exudate
             <tr>
               <th>Carbohydrates</th>
               <th>{Math.round(calcCarbohydratescal / 3.4)} gm</th>
-              <th>{Math.round((calcCarbohydratescal / 3.4)/calcFluids*10000)/100} %</th>
-              <th>{Math.round((calcCarbohydratescal)/calcCalories*10000)/100} %</th>
+              <th>
+                {Math.round((calcCarbohydratescal / 3.4 / calcFluids) * 10000) /
+                  100}{" "}
+                %
+              </th>
+              <th>
+                {Math.round((calcCarbohydratescal / calcCalories) * 10000) /
+                  100}{" "}
+                %
+              </th>
               <th>{Math.round(calcCarbohydratescal)} kcal</th>
             </tr>
             <tr>
               <th>Proteins</th>
               <th>{Math.round(calcProteins)} gm</th>
-              <th>{Math.round((calcProteins)/calcFluids*10000)/100} %</th>
-              <th>{Math.round((calcProteins * 4)/calcCalories*10000)/100} %</th>
+              <th>{Math.round((calcProteins / calcFluids) * 10000) / 100} %</th>
+              <th>
+                {Math.round(((calcProteins * 4) / calcCalories) * 10000) / 100}{" "}
+                %
+              </th>
               <th>{Math.round(calcProteins * 4)} kcal</th>
             </tr>
             <tr>
               <th>Lipids</th>
               <th>{calcLipidsvolscript}</th>
               <th></th>
-              <th>{Math.round((calcLipidscal)/calcCalories*10000)/100} %</th>
+              <th>
+                {Math.round((calcLipidscal / calcCalories) * 10000) / 100} %
+              </th>
               <th> {calcLipidscalscript}</th>
             </tr>
-            <tr>
-            </tr>
+            <tr></tr>
             <tr>
               <th>Total</th>
               <th></th>
               <th></th>
               <th></th>
-              <th> {calcCalories} kcal</th>
+              <th> {Math.round(calcCalories)} kcal</th>
             </tr>
           </tbody>
         </Table>
@@ -511,7 +601,6 @@ Additional protein for lost exudate
       <br></br>
       Suggested Weekly Lipid frequency (20% 250mL): {lipidFrequency}
       <br></br>
-<br></br> GIR: "{calcGIR * 1000}"
     </>
   );
 }
