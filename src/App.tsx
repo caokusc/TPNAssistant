@@ -690,11 +690,13 @@ function App() {
                   <th>{patientObesity}</th>
                 </tr>
               </tbody>
-
-            </Table>              
-            <br></br>
-            <br></br>
+            </Table>     
+     
           </Center>
+<Box               sx={(theme) => ({
+                padding: 20,
+                borderRadius: theme.radius.md,
+              })} > </Box> 
         </Tabs.Panel>
 
         <Tabs.Panel value="osmolarity" pl="xs">
