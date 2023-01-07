@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import {
   Box,
-  Button,
   Center,
   Checkbox,
   Grid,
@@ -75,9 +74,9 @@ function App() {
   })();
 
   let patientdosingBW =
-  (patientABW / calcIBW) > 1.2
-  ? calcIBW + (0.25 * (patientABW - calcIBW))
-  : patientABW;
+    patientABW / calcIBW > 1.2
+      ? calcIBW + 0.25 * (patientABW - calcIBW)
+      : patientABW;
   let patientObesity = patientABW / calcIBW > 1.2 ? "Obese" : "Not Obese";
   let patientBMI =
     patientABW != 0 && patientHeight != 0
@@ -123,7 +122,9 @@ function App() {
     { stats: "Burn", min: 1.5, max: 2 },
   ];
 
-  const proteinmarks = proMarks.find((element) => element.stats === form.values.patientProteinStats);
+  const proteinmarks = proMarks.find(
+    (element) => element.stats === form.values.patientProteinStats
+  );
   const proteinmarksmin = proteinmarks?.min!;
   const proteinmarksmax = proteinmarks?.max!;
 
@@ -174,44 +175,60 @@ function App() {
     3.4 /
     patientABW /
     ((calcFluids / form.values.infusionRate) * 60);
-  let lipidFrequency =     form.values.propofol && calcLipidsvol <= 0
-  ? "Lipids Satisfied by Propofol Infusion"
-  : form.values.propofol
-  ? Math.round(((calcLipidscal - form.values.propofolrate * 26.4)*3.5)/250)
-  : Math.round((calcLipidscal * 3.5) / 250);
+  let lipidFrequency =
+    form.values.propofol && calcLipidsvol <= 0
+      ? "Lipids Satisfied by Propofol Infusion"
+      : form.values.propofol
+      ? Math.round(
+          ((calcLipidscal - form.values.propofolrate * 26.4) * 3.5) / 250
+        )
+      : Math.round((calcLipidscal * 3.5) / 250);
 
-  let dosingWeightDescrition =     (patientABW / calcIBW) > 1.2
-  ? "(>120% IBW): Uses adjusted body weight unless specified"
-  : "(<120% IBW): Uses actual body weight";
-  
+  let dosingWeightDescrition =
+    patientABW / calcIBW > 1.2
+      ? "(>120% IBW): Uses adjusted body weight unless specified"
+      : "(<120% IBW): Uses actual body weight";
 
   const patientCaloricNeeds = form.values.patientCaloricNeeds;
   const patientProteinNeeds = form.values.patientProteinNeeds;
 
   useEffect(() => {
-    if (patientCaloricNeeds < minCalmark){
+    if (patientCaloricNeeds < minCalmark) {
       form.setValues({ patientCaloricNeeds: minCalmark });
-    }
-    else if (patientCaloricNeeds > maxCalmark){
+    } else if (patientCaloricNeeds > maxCalmark) {
       form.setValues({ patientCaloricNeeds: maxCalmark });
     }
   }, [patientCaloricNeeds, minCalmark, maxCalmark]);
 
   useEffect(() => {
-    if (patientProteinNeeds < proteinmarksmin){
+    if (patientProteinNeeds < proteinmarksmin) {
       form.setValues({ patientProteinNeeds: proteinmarksmin });
-    }
-    else if (patientProteinNeeds > proteinmarksmax){
+    } else if (patientProteinNeeds > proteinmarksmax) {
       form.setValues({ patientProteinNeeds: proteinmarksmax });
     }
   }, [patientProteinNeeds, proteinmarksmin, proteinmarksmax]);
 
-let calcOsmolarity = calcLipidsvol>0 ? ((calcProteins*10 + calcCarbohydratescal*1.47 + calcLipidsvol*0.14)/calcFluids) + ( (form.values.calciumMEQ*1.4) + (form.values.magnesiumMEQ*1) + (form.values.potassiumMEQ*2)+ (form.values.sodiumMEQ*2))/1000 :  ((calcProteins*10 + calcCarbohydratescal*1.47)/calcFluids) + ( (form.values.calciumMEQ*1.4) + (form.values.magnesiumMEQ*1) + (form.values.potassiumMEQ*2)+ (form.values.sodiumMEQ*2))/1000
-  
+  let calcOsmolarity =
+    calcLipidsvol > 0
+      ? (calcProteins * 10 +
+          calcCarbohydratescal * 1.47 +
+          calcLipidsvol * 0.14) /
+          calcFluids +
+        (form.values.calciumMEQ * 1.4 +
+          form.values.magnesiumMEQ * 1 +
+          form.values.potassiumMEQ * 2 +
+          form.values.sodiumMEQ * 2) /
+          1000
+      : (calcProteins * 10 + calcCarbohydratescal * 1.47) / calcFluids +
+        (form.values.calciumMEQ * 1.4 +
+          form.values.magnesiumMEQ * 1 +
+          form.values.potassiumMEQ * 2 +
+          form.values.sodiumMEQ * 2) /
+          1000;
+
   return (
     <>
       <Grid>
-
         <Grid.Col span={4} px={20}>
           <NumberInput
             defaultValue={60}
@@ -223,19 +240,17 @@ let calcOsmolarity = calcLipidsvol>0 ? ((calcProteins*10 + calcCarbohydratescal*
           />
         </Grid.Col>
         <Grid.Col span={2}>
-
           <SegmentedControl
-                          sx={(theme) => ({
-                            backgroundColor: theme.colors.gray[3],
-                          })}
-          orientation="vertical"
+            sx={(theme) => ({
+              backgroundColor: theme.colors.gray[3],
+            })}
+            orientation="vertical"
             {...form.getInputProps("weightmeasurement")}
             data={[
               { label: "Kg", value: "kg" },
               { label: "Lb", value: "lb" },
             ]}
           />
-
         </Grid.Col>
         <Grid.Col span={4} px={20}>
           <NumberInput
@@ -249,10 +264,10 @@ let calcOsmolarity = calcLipidsvol>0 ? ((calcProteins*10 + calcCarbohydratescal*
         </Grid.Col>
         <Grid.Col span={2}>
           <SegmentedControl
-                          sx={(theme) => ({
-                            backgroundColor: theme.colors.gray[3],
-                          })}
-          orientation="vertical"
+            sx={(theme) => ({
+              backgroundColor: theme.colors.gray[3],
+            })}
+            orientation="vertical"
             {...form.getInputProps("heightmeasurement")}
             data={[
               { label: "cm", value: "cm" },
@@ -262,28 +277,30 @@ let calcOsmolarity = calcLipidsvol>0 ? ((calcProteins*10 + calcCarbohydratescal*
         </Grid.Col>
         <Grid.Col span={12}>
           <Center>
-          <Box
+            <Box
+              sx={(theme) => ({
+                backgroundColor: theme.colors.gray[6],
+                textAlign: "center",
+                padding: 1,
+                borderRadius: theme.radius.md,
+              })}
+            >
+              <SegmentedControl
                 sx={(theme) => ({
-                  backgroundColor: theme.colors.gray[6],
-                  textAlign: 'center',
-                  padding: 1,
+                  backgroundColor: theme.colors.gray[2],
                   borderRadius: theme.radius.md,
                 })}
-          >
-            <SegmentedControl
-                            sx={(theme) => ({
-                              backgroundColor: theme.colors.gray[2],
-                              borderRadius: theme.radius.md,
-                            })}
-            color = {form.values.patientGender == "Male" ? "blue" : "pink"}
-            size="md"
-              {...form.getInputProps("patientGender")}
-              data={[
-                { label: "Male", value: "Male" },
-                { label: "Female", value: "Female" },
-              ]}
-            /></Box>
-          </Center>        <hr></hr>
+                color={form.values.patientGender == "Male" ? "blue" : "pink"}
+                size="md"
+                {...form.getInputProps("patientGender")}
+                data={[
+                  { label: "Male", value: "Male" },
+                  { label: "Female", value: "Female" },
+                ]}
+              />
+            </Box>
+          </Center>{" "}
+          <hr></hr>
         </Grid.Col>
 
         <Grid.Col span={6} px={50}>
@@ -300,30 +317,34 @@ let calcOsmolarity = calcLipidsvol>0 ? ((calcProteins*10 + calcCarbohydratescal*
             <Tooltip label="25-30 kcal/kg/day">
               <Radio value="Standard" label="Standard" disabled={initdisable} />
             </Tooltip>
-            <Tooltip label="30-40 kcal/kg/day"> 
-            <Radio
-              value="Severe"
-              label="Severe Inujry"
-              disabled={initdisable}
-            /></Tooltip>
-                        <Tooltip label="45-55 kcal/kg/day"> 
-            <Radio
-              value="Extensive"
-              label="Extensive Trauma/Burn"
-              disabled={initdisable}
-            /></Tooltip>
-                        <Tooltip label="11-14 kcal/kg/day by ABW"> 
-            <Radio
-              value="Obese"
-              label="Obese and Critical Illness (BMI 30-50kg/m^2)"
-              disabled={patientBMI > 50 || patientBMI < 30 || initdisable}
-            /></Tooltip>
-                        <Tooltip label="22-25 kcal/kg/day by IBW"> 
-            <Radio
-              value="Obese2"
-              label="Obese and Critical Illness (BMI >50kg/m^2)"
-              disabled={patientBMI < 50 || initdisable}
-            /></Tooltip>
+            <Tooltip label="30-40 kcal/kg/day">
+              <Radio
+                value="Severe"
+                label="Severe Inujry"
+                disabled={initdisable}
+              />
+            </Tooltip>
+            <Tooltip label="45-55 kcal/kg/day">
+              <Radio
+                value="Extensive"
+                label="Extensive Trauma/Burn"
+                disabled={initdisable}
+              />
+            </Tooltip>
+            <Tooltip label="11-14 kcal/kg/day by ABW">
+              <Radio
+                value="Obese"
+                label="Obese and Critical Illness (BMI 30-50kg/m^2)"
+                disabled={patientBMI > 50 || patientBMI < 30 || initdisable}
+              />
+            </Tooltip>
+            <Tooltip label="22-25 kcal/kg/day by IBW">
+              <Radio
+                value="Obese2"
+                label="Obese and Critical Illness (BMI >50kg/m^2)"
+                disabled={patientBMI < 50 || initdisable}
+              />
+            </Tooltip>
           </Radio.Group>
           <br></br>
           <Slider
@@ -358,38 +379,44 @@ let calcOsmolarity = calcLipidsvol>0 ? ((calcProteins*10 + calcCarbohydratescal*
                 disabled={initdisable}
               />
             </Tooltip>
-            <Tooltip label="1.2-2 gm/kg/day"> 
-            <Radio
-              value="Crit1"
-              label="Critical Illness (BMI <30kg/m^2)"
-              disabled={initdisable || patientBMI > 30}
-            /></Tooltip>
-                        <Tooltip label="2 gm/kg/day by IBW"> 
-            <Radio
-              value="Crit2"
-              label="Critical Illness (BMI 30-40kg/m^2)"
-              disabled={patientBMI > 40 || patientBMI < 30 || initdisable}
-            /></Tooltip>
-                        <Tooltip label="2.5 gm/kg/day by IBW"> 
-            <Radio
-              value="Crit3"
-              label="Critical Illness (BMI >40kg/m^2)"
-              disabled={patientBMI < 40 || initdisable}
-            /></Tooltip>
-                        <Tooltip label="0.6-0.8 gm/kg/day(Not on HD, GFR <30m)"> 
-            <Radio
-              value="CKD1"
-              label="Renal Failure/CKD"
-              disabled={initdisable}
-            /></Tooltip>
-                        <Tooltip label="1.2-2.5 gm/kg/day"> 
-            <Radio
-              value="CKD2"
-              label="Renal Failure/CKD with Dialysis"
-              disabled={initdisable}
-            /></Tooltip>
-                        <Tooltip label="1.5-2 gm/kg/day"> 
-            <Radio value="Burn" label="Burn Injury" disabled={initdisable} /></Tooltip>
+            <Tooltip label="1.2-2 gm/kg/day">
+              <Radio
+                value="Crit1"
+                label="Critical Illness (BMI <30kg/m^2)"
+                disabled={initdisable || patientBMI > 30}
+              />
+            </Tooltip>
+            <Tooltip label="2 gm/kg/day by IBW">
+              <Radio
+                value="Crit2"
+                label="Critical Illness (BMI 30-40kg/m^2)"
+                disabled={patientBMI > 40 || patientBMI < 30 || initdisable}
+              />
+            </Tooltip>
+            <Tooltip label="2.5 gm/kg/day by IBW">
+              <Radio
+                value="Crit3"
+                label="Critical Illness (BMI >40kg/m^2)"
+                disabled={patientBMI < 40 || initdisable}
+              />
+            </Tooltip>
+            <Tooltip label="0.6-0.8 gm/kg/day(Not on HD, GFR <30m)">
+              <Radio
+                value="CKD1"
+                label="Renal Failure/CKD"
+                disabled={initdisable}
+              />
+            </Tooltip>
+            <Tooltip label="1.2-2.5 gm/kg/day">
+              <Radio
+                value="CKD2"
+                label="Renal Failure/CKD with Dialysis"
+                disabled={initdisable}
+              />
+            </Tooltip>
+            <Tooltip label="1.5-2 gm/kg/day">
+              <Radio value="Burn" label="Burn Injury" disabled={initdisable} />
+            </Tooltip>
           </Radio.Group>
           <br></br>
           <Slider
@@ -408,13 +435,13 @@ let calcOsmolarity = calcLipidsvol>0 ? ((calcProteins*10 + calcCarbohydratescal*
             ]}
           />
           <br></br>
-          <Tooltip label="Additional 15-30 gm protein per liter exudate lost"> 
-          <Checkbox
-            label="Open Abdomen"
-            disabled={initdisable}
-            {...form.getInputProps("openAbd")}
-          />
-</Tooltip>
+          <Tooltip label="Additional 15-30 gm protein per liter exudate lost">
+            <Checkbox
+              label="Open Abdomen"
+              disabled={initdisable}
+              {...form.getInputProps("openAbd")}
+            />
+          </Tooltip>
           <div hidden={!form.values.openAbd}>
             <NumberInput
               defaultValue={1}
@@ -443,7 +470,10 @@ let calcOsmolarity = calcLipidsvol>0 ? ((calcProteins*10 + calcCarbohydratescal*
             <br></br>
           </div>
         </Grid.Col>
-        <Grid.Col span={12}>             <hr></hr>     </Grid.Col>
+        <Grid.Col span={12}>
+          {" "}
+          <hr></hr>{" "}
+        </Grid.Col>
         <Grid.Col span={6} px={50}>
           {" "}
           Fluid Needs: TPN Volume by Weight
@@ -500,12 +530,13 @@ let calcOsmolarity = calcLipidsvol>0 ? ((calcProteins*10 + calcCarbohydratescal*
             ]}
           />
           <br></br>
-          <Tooltip label ="Propofol 10mg/ml contains 1.1 kcal/ml"> 
-          <Checkbox
-            label="Propofol"
-            disabled={initdisable}
-            {...form.getInputProps("propofol")}
-          /></Tooltip>
+          <Tooltip label="Propofol 10mg/ml contains 1.1 kcal/ml">
+            <Checkbox
+              label="Propofol"
+              disabled={initdisable}
+              {...form.getInputProps("propofol")}
+            />
+          </Tooltip>
           <div hidden={!form.values.propofol}>
             <NumberInput
               defaultValue={0}
@@ -518,17 +549,20 @@ let calcOsmolarity = calcLipidsvol>0 ? ((calcProteins*10 + calcCarbohydratescal*
           </div>
         </Grid.Col>
         <Grid.Col span={6} px={50}>
-          <Tooltip label="Used in GIR estimate"> 
-          <NumberInput
-            defaultValue={100}
-            placeholder="in mL"
-            label="Infusion rate in mL/hr"
-            disabled={initdisable}
-            variant="filled"
-            {...form.getInputProps("infusionRate")}
-            hideControls
-          /></Tooltip><div hidden={initdisable} >GIR: {Math.round(calcGIR * 100000)/100} mg/kg/min</div>
-
+          <Tooltip label="Used in GIR estimate">
+            <NumberInput
+              defaultValue={100}
+              placeholder="in mL"
+              label="Infusion rate in mL/hr"
+              disabled={initdisable}
+              variant="filled"
+              {...form.getInputProps("infusionRate")}
+              hideControls
+            />
+          </Tooltip>
+          <div hidden={initdisable}>
+            GIR: {Math.round(calcGIR * 100000) / 100} mg/kg/min
+          </div>
         </Grid.Col>
       </Grid>
       <Center px={30}>
@@ -592,131 +626,156 @@ let calcOsmolarity = calcLipidsvol>0 ? ((calcProteins*10 + calcCarbohydratescal*
             </tr>
           </tbody>
         </Table>
-        
       </Center>
-<Center>   <b>   TPN Volume: {Math.round(calcFluids / 10) * 10} mL      <br></br>
-      Suggested Weekly Lipid frequency (20% 250mL): {lipidFrequency}</b> </Center>
+      <Center>
+        {" "}
+        <b>
+          {" "}
+          TPN Volume: {Math.round(calcFluids / 10) * 10} mL <br></br>
+          Suggested Weekly Lipid frequency (20% 250mL): {lipidFrequency}
+        </b>{" "}
+      </Center>
 
       <br></br>
-                           <Tabs variant="pills" orientation="vertical" defaultValue="basic info">
-      <Tabs.List>
-        <Tabs.Tab value="basic info" >Basic Info</Tabs.Tab>
-        <Tabs.Tab value="osmolarity" >Osmolarity</Tabs.Tab>
-        <Tabs.Tab value="formula" >Formula</Tabs.Tab>
-      </Tabs.List>
+      <Tabs variant="pills" orientation="vertical" defaultValue="basic info">
+        <Tabs.List>
+          <Tabs.Tab value="basic info">Basic Info</Tabs.Tab>
+          <Tabs.Tab value="osmolarity">Osmolarity</Tabs.Tab>
+          <Tabs.Tab value="formula">Formula</Tabs.Tab>
+        </Tabs.List>
 
-      <Tabs.Panel value="basic info" pl="xs">
-      <Center px={30}>
+        <Tabs.Panel value="basic info" pl="xs">
+          <Center px={30}>
+            <Table
+              highlightOnHover
+              horizontalSpacing="sm"
+              verticalSpacing="xs"
+              withColumnBorders
+              withBorder
+            >
+              <thead>
+                <tr>
+                  <th>Characteristic</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <Tooltip.Floating
+                  position="right"
+                  width={150}
+                  multiline
+                  label="Male: [50kg + 2.3 x (Height(Inches) - 60]    Female: [45.5kg + 2.3 x (Height(Inches) - 60]"
+                >
+                  <tr>
+                    <th>IBW</th>
+                    <th>{Math.round(calcIBW * 10) / 10} kg</th>
+                  </tr>
+                </Tooltip.Floating>
 
-        <Table
-        highlightOnHover
-          horizontalSpacing="sm"
-          verticalSpacing="xs"
-          withColumnBorders
-          withBorder
+                <tr>
+                  <th>BMI</th>
+                  <th>
+                    {Math.round(patientBMI * 10) / 10} kg/m<sup>2</sup>
+                  </th>
+                </tr>
+                <Tooltip.Floating label={dosingWeightDescrition}>
+                  <tr>
+                    <th>Dosing Weight</th>
+                    <th>{Math.round(patientdosingBW * 10) / 10} kg</th>
+                  </tr>
+                </Tooltip.Floating>
 
-        >
+                <tr>
+                  <th>{"Obesity (>120% IBW)"}</th>
+                  <th>{patientObesity}</th>
+                </tr>
+              </tbody>
 
-          <thead>
-            <tr>
-              <th>Characteristic</th>
-              <th>Value</th>
-            </tr>
-          </thead>
-          <tbody>
-          <Tooltip.Floating position="right" 
-                    width={150}
-                    multiline
-              label="Male: [50kg + 2.3 x (Height(Inches) - 60]    Female: [45.5kg + 2.3 x (Height(Inches) - 60]">
-            <tr>
-              <th>IBW</th>
-<th>{Math.round(calcIBW * 10) / 10} kg</th>
-            </tr>
-            </Tooltip.Floating>
+            </Table>              
+            <br></br>
+            <br></br>
+          </Center>
+        </Tabs.Panel>
 
-            <tr>
-              <th>BMI</th>
-              <th>{Math.round(patientBMI * 10) / 10} kg/m<sup>2</sup></th>
-            </tr>
-<Tooltip.Floating label={dosingWeightDescrition}>
-            <tr>
-              <th>Dosing Weight</th>
-              <th>{Math.round(patientdosingBW * 10) / 10} kg</th>
-            </tr>
-</Tooltip.Floating>
-
-            <tr>
-              <th>{"Obesity (>120% IBW)"}</th>
-              <th>{patientObesity}</th>
-            </tr>
-          </tbody>
-        </Table>
-      </Center>
-      
-      </Tabs.Panel>
-
-      <Tabs.Panel value="osmolarity" pl="xs">
-        <Grid> <Grid.Col span={6}> 
-      <NumberInput
-            defaultValue={0}
-            placeholder="in mEq"
-            label="Na Chloride, Acetate or Phosphate salt in mEq/L"
-            disabled={initdisable}
-            variant="filled"
-            {...form.getInputProps("sodiumMEQ")}
-            hideControls
-          />
-      <NumberInput
-            defaultValue={0}
-            placeholder="in mEq"
-            label="K Chloride, Acetate or Phosphate salt in mEq/L"
-            disabled={initdisable}
-            variant="filled"
-            {...form.getInputProps("potassiumMEQ")}
-            hideControls
-          />
-                <NumberInput
-            defaultValue={0}
-            placeholder="in mEq"
-            label="Magnesium sulfate in mEq/L"
-            disabled={initdisable}
-            variant="filled"
-            {...form.getInputProps("magnesiumMEQ")}
-            hideControls
-          />
-                <NumberInput
-            defaultValue={0}
-            placeholder="in mEq"
-            label="Calcium Gluconate in mEq/L"
-            disabled={initdisable}
-            variant="filled"
-            {...form.getInputProps("calciumMEQ")}
-            hideControls
-          /></Grid.Col>
+        <Tabs.Panel value="osmolarity" pl="xs">
+          <Grid>
+            {" "}
+            <Grid.Col span={6}>
+              <NumberInput
+                defaultValue={0}
+                placeholder="in mEq"
+                label="Na Chloride, Acetate or Phosphate salt in mEq/L"
+                disabled={initdisable}
+                variant="filled"
+                {...form.getInputProps("sodiumMEQ")}
+                hideControls
+              />
+              <NumberInput
+                defaultValue={0}
+                placeholder="in mEq"
+                label="K Chloride, Acetate or Phosphate salt in mEq/L"
+                disabled={initdisable}
+                variant="filled"
+                {...form.getInputProps("potassiumMEQ")}
+                hideControls
+              />
+              <NumberInput
+                defaultValue={0}
+                placeholder="in mEq"
+                label="Magnesium sulfate in mEq/L"
+                disabled={initdisable}
+                variant="filled"
+                {...form.getInputProps("magnesiumMEQ")}
+                hideControls
+              />
+              <NumberInput
+                defaultValue={0}
+                placeholder="in mEq"
+                label="Calcium Gluconate in mEq/L"
+                disabled={initdisable}
+                variant="filled"
+                {...form.getInputProps("calciumMEQ")}
+                hideControls
+              />
+              <br></br>
+              <br></br>
+            </Grid.Col>
+            <br></br>
+            Estimated Osmolarity: {Math.round(calcOsmolarity * 100000) /
+              100}{" "}
+            mOsm/L{" "}
+          </Grid>
+        </Tabs.Panel>
+        <Tabs.Panel value="formula" pl="xs">
+          <Center>
+            {
+              "Ideal Body Weight (IBW): Male: [50kg + 2.3 x (Height(Inches) - 60]   "
+            }{" "}
+            <br></br>
+            {
+              "Ideal Body Weight (IBW):  Female: [45.5kg + 2.3 x (Height(Inches) - 60]  "
+            }{" "}
+            <br></br> <br></br>
+            {
+              "Adjusted Body Weight (AjBW): IBW + 0.25 x (Height(Inches)-IBW)"
+            }{" "}
+            <br></br>
+            {"Dosing Body Weight: Actual BW [If ABW < 120% IBW]"}
+            <br></br>
+            {"Dosing Body Weight: Adjusted BW [If ABW > 120% IBW]"}
+            <br></br>
+            {"Body Mass Index (BMI): Weight(kg) / Height(m)^2"} <br></br>{" "}
+            <br></br>
+            {"Dextrose/Carbohydrate/Sugar = 3.4kcal/g"} <br></br>
+            {"Proteins = 4kcal/g"} <br></br>
+            {"Lipids (20% Concentration)= 2kcal/mL"} <br></br>
+            {"Propofol (10mg/ml Concentration)= 1.1kcal/mL"} <br></br> <br></br>
+            {"Kg = 2.205 x lb"} <br></br>
+            {"Inches = 2.54 x cm"} <br></br>
+          </Center>
           <br></br>
-Estimated Osmolarity: {Math.round(calcOsmolarity*100000)/100} mOsm/L </Grid>
-      </Tabs.Panel>
-<Tabs.Panel value="formula" pl="xs"> 
-<Center> 
-{'Ideal Body Weight (IBW): Male: [50kg + 2.3 x (Height(Inches) - 60]   '}          <br></br>
-{'Ideal Body Weight (IBW):  Female: [45.5kg + 2.3 x (Height(Inches) - 60]  '}         <br></br>           <br></br>
-
-         {'Adjusted Body Weight (AjBW): IBW + 0.25 x (Height(Inches)-IBW)'}  <br></br>
-{"Dosing Body Weight: Actual BW [If ABW < 120% IBW]" }<br></br>
-{"Dosing Body Weight: Adjusted BW [If ABW > 120% IBW]" }<br></br>
- {"Body Mass Index (BMI): Weight(kg) / Height(m)^2"} <br></br> <br></br>
-
- {"Dextrose/Carbohydrate/Sugar = 3.4kcal/g"} <br></br>
- {"Proteins = 4kcal/g"} <br></br>
- {"Lipids (20% Concentration)= 2kcal/mL"} <br></br>
- {"Propofol (10mg/ml Concentration)= 1.1kcal/mL"} <br></br> <br></br>
-
- {"Kg = 2.205 x lb"} <br></br>
- {"Inches = 2.54 x cm"} <br></br>
-</Center>
-</Tabs.Panel>
-    </Tabs>
-
+        </Tabs.Panel>
+      </Tabs>
     </>
   );
 }
