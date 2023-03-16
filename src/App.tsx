@@ -223,6 +223,8 @@ function App() {
             variant="filled"
             {...form.getInputProps("patientABW")}
             hideControls
+            ta="center"
+            styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
           />
         </Grid.Col>
         <Grid.Col span={2}>
@@ -236,6 +238,7 @@ function App() {
               { label: "Kg", value: "kg" },
               { label: "Lb", value: "lb" },
             ]}
+            
           />
         </Grid.Col>
         <Grid.Col span={4} px={20}>
@@ -246,6 +249,8 @@ function App() {
             variant="filled"
             {...form.getInputProps("patientHeight")}
             hideControls
+            ta="center"
+            styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
           />
         </Grid.Col>
         <Grid.Col span={2}>
@@ -426,6 +431,7 @@ function App() {
               label="Open Abdomen"
               disabled={initdisable}
               {...form.getInputProps("openAbd")}
+              styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
             />
           </Tooltip>
           <div hidden={!form.values.openAbd}>
@@ -436,6 +442,7 @@ function App() {
               variant="filled"
               {...form.getInputProps("openAbdamount")}
               hideControls
+              styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
             />
             Additional protein for lost exudate per liter
             <Slider
@@ -462,7 +469,8 @@ function App() {
         </Grid.Col>
         <Grid.Col span={6} px={50}>
           {" "}
-          Fluid Needs: TPN Volume by Weight
+          <div hidden={form.values.customVolume}>
+          TPN Volume by Weight
           <Slider
             size="sm"
             disabled={initdisable || form.values.customVolume}
@@ -479,11 +487,13 @@ function App() {
               { value: 50, label: 50 },
             ]}
           />
+          </div>
           <br></br>
           <Checkbox
-            label="Custom Volume"
+            label="Custom TPN Volume"
             disabled={initdisable}
             {...form.getInputProps("customVolume")}
+            styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
           />
           <div hidden={!form.values.customVolume}>
             <NumberInput
@@ -493,6 +503,7 @@ function App() {
               variant="filled"
               {...form.getInputProps("customVolumeamount")}
               hideControls
+              styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
             />
           </div>
         </Grid.Col>
@@ -521,6 +532,7 @@ function App() {
               label="Propofol"
               disabled={initdisable}
               {...form.getInputProps("propofol")}
+              styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
             />
           </Tooltip>
           <div hidden={!form.values.propofol}>
@@ -531,6 +543,7 @@ function App() {
               variant="filled"
               {...form.getInputProps("propofolrate")}
               hideControls
+              styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
             />
           </div>
         </Grid.Col>
@@ -539,11 +552,12 @@ function App() {
             <NumberInput
               defaultValue={100}
               placeholder="in mL"
-              label="Infusion rate in mL/hr"
+              label="TPN Infusion rate in mL/hr"
               disabled={initdisable}
               variant="filled"
               {...form.getInputProps("infusionRate")}
               hideControls
+              styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
             />
           </Tooltip>
           <div hidden={initdisable}>
@@ -551,22 +565,27 @@ function App() {
           </div>
         </Grid.Col>
       </Grid>
-      <Center px={30}>
-        <Table
-          horizontalSpacing="sm"
-          verticalSpacing="xs"
+      <Center px={40} mt={10} 
+       >
+<Table
+          horizontalSpacing="xs"
+          verticalSpacing={7}
           withColumnBorders
           withBorder
+        sx={{
+          backgroundColor: "lightgray",
+        }}
         >
-          <thead>
+          <thead>          
             <tr>
               <th>Macronutrient</th>
               <th>Amount</th>
               <th>Percent by Weight</th>
               <th>Percent by Calories</th>
               <th>Calories</th>
-            </tr>
+            </tr>          
           </thead>
+
           <tbody>
             <tr>
               <th>Carbohydrates</th>
@@ -610,7 +629,7 @@ function App() {
               <th></th>
               <th> {Math.round(calcCalories)} kcal</th>
             </tr>
-          </tbody>
+          </tbody>         
         </Table>
       </Center>
       <Center>
@@ -631,13 +650,16 @@ function App() {
         </Tabs.List>
 
         <Tabs.Panel value="basic info" pl="xs">
-          <Center px={30}>
+          <Center px={50}>
             <Table
               highlightOnHover
               horizontalSpacing="sm"
               verticalSpacing="xs"
               withColumnBorders
               withBorder
+              sx={{
+                backgroundColor: "lightgray",
+              }}
             >
               <thead>
                 <tr>
@@ -691,39 +713,43 @@ function App() {
             <Grid.Col span={6}>
               <NumberInput
                 defaultValue={0}
-                placeholder="in mEq"
+                placeholder="in mEq/L"
                 label="Na Chloride, Acetate or Phosphate salt in mEq/L"
                 disabled={initdisable}
                 variant="filled"
                 {...form.getInputProps("sodiumMEQ")}
                 hideControls
+                styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
               />
               <NumberInput
                 defaultValue={0}
-                placeholder="in mEq"
+                placeholder="in mEq/L"
                 label="K Chloride, Acetate or Phosphate salt in mEq/L"
                 disabled={initdisable}
                 variant="filled"
                 {...form.getInputProps("potassiumMEQ")}
                 hideControls
+                styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
               />
               <NumberInput
                 defaultValue={0}
-                placeholder="in mEq"
+                placeholder="in mEq/L"
                 label="Magnesium sulfate in mEq/L"
                 disabled={initdisable}
                 variant="filled"
                 {...form.getInputProps("magnesiumMEQ")}
                 hideControls
+                styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
               />
               <NumberInput
                 defaultValue={0}
-                placeholder="in mEq"
+                placeholder="in mEq/L"
                 label="Calcium Gluconate in mEq/L"
                 disabled={initdisable}
                 variant="filled"
                 {...form.getInputProps("calciumMEQ")}
                 hideControls
+                styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
               />
               <br></br>
               <br></br>
