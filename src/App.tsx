@@ -84,33 +84,19 @@ function App() {
       : 0;
   let initdisable =
     patientBMI == 0 || form.values.patientGender == "" ? true : false;
-
-  const minCalmark = (() => {
-    return form.values.patientCaloricStats == "Standard"
-      ? 25
-      : form.values.patientCaloricStats == "Severe"
-      ? 30
-      : form.values.patientCaloricStats == "Extensive"
-      ? 45
-      : form.values.patientCaloricStats == "Obese"
-      ? 11
-      : form.values.patientCaloricStats == "Obese1"
-      ? 22
-      : 0;
-  })();
-
-  const maxCalmark =
-    form.values.patientCaloricStats == "Standard"
-      ? 30
-      : form.values.patientCaloricStats == "Severe"
-      ? 40
-      : form.values.patientCaloricStats == "Extensive"
-      ? 55
-      : form.values.patientCaloricStats == "Obese"
-      ? 14
-      : form.values.patientCaloricStats == "Obese1"
-      ? 25
-      : 0;
+    
+      const calMarks = [
+        { stats: "Standard", min: 25, max: 30 },
+        { stats: "Severe", min: 30, max: 40 },
+        { stats: "Extensive", min: 45, max: 55 },
+        { stats: "Obese", min: 11, max: 14 },
+        { stats: "Obese1", min: 22, max: 25 },
+      ];
+  const caloriemarks = calMarks.find(
+    (element) => element.stats === form.values.patientCaloricStats
+  );
+  const caloriemarksmin = caloriemarks?.min!;
+  const caloriemarksmax = caloriemarks?.max!;
 
   const proMarks = [
     { stats: "Maintenance", min: 1.2, max: 1.5 },
@@ -193,12 +179,12 @@ function App() {
   const patientProteinNeeds = form.values.patientProteinNeeds;
 
   useEffect(() => {
-    if (patientCaloricNeeds < minCalmark) {
-      form.setValues({ patientCaloricNeeds: minCalmark });
-    } else if (patientCaloricNeeds > maxCalmark) {
-      form.setValues({ patientCaloricNeeds: maxCalmark });
+    if (patientCaloricNeeds < caloriemarksmin) {
+      form.setValues({ patientCaloricNeeds: caloriemarksmin });
+    } else if (patientCaloricNeeds > caloriemarksmax) {
+      form.setValues({ patientCaloricNeeds: caloriemarksmax });
     }
-  }, [patientCaloricNeeds, minCalmark, maxCalmark]);
+  }, [patientCaloricNeeds, caloriemarksmin, caloriemarksmax]);
 
   useEffect(() => {
     if (patientProteinNeeds < proteinmarksmin) {
@@ -353,12 +339,12 @@ function App() {
             label={form.values.patientCaloricNeeds + " kcal/kg"}
             step={0.5}
             disabled={initdisable}
-            min={minCalmark}
-            max={maxCalmark}
+            min={caloriemarksmin}
+            max={caloriemarksmax}
             {...form.getInputProps("patientCaloricNeeds")}
             marks={[
-              { value: minCalmark, label: minCalmark },
-              { value: maxCalmark, label: maxCalmark },
+              { value: caloriemarksmin, label: caloriemarksmin },
+              { value: caloriemarksmax, label: caloriemarksmax },
             ]}
           />
         </Grid.Col>
