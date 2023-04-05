@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import "./App.css";
+import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Center,
@@ -24,6 +23,7 @@ function App() {
       heightmeasurement: "cm",
 
       patientABW: 0,
+      patientDosingWeight: 0,
       patientHeight: 0,
       patientGender: "" as Gender,
 
@@ -52,6 +52,12 @@ function App() {
     },
   });
 
+  const [dosingmethodmanual, setDosingmethod] = useState(false);
+  function dosingselect() {
+    if (dosingmethodmanual == false) {setDosingmethod(true);}
+    else {setDosingmethod(false)}
+  }
+
   let patientABW =
     form.values.weightmeasurement == "kg"
       ? form.values.patientABW
@@ -63,7 +69,8 @@ function App() {
 
   const calcIBW = (() => {
     let patientIBW = 0;
-    if (form.values.patientGender == "Male") {
+    if (dosingmethodmanual == true) {patientIBW = 0;}
+    else if (form.values.patientGender == "Male") {
       patientIBW = 50 + 2.3 * (patientHeight - 60);
     } else if (form.values.patientGender == "Female") {
       patientIBW = 45.5 + 2.3 * (patientHeight - 60);
@@ -74,16 +81,18 @@ function App() {
   })();
 
   let patientdosingBW =
+  dosingmethodmanual ? form.values.patientDosingWeight :(
     patientABW / calcIBW > 1.2
       ? calcIBW + 0.25 * (patientABW - calcIBW)
-      : patientABW;
-  let patientObesity = patientABW / calcIBW > 1.2 ? "Obese" : "Not Obese";
-  let patientBMI =
+      : patientABW);
+
+  let patientObesity = dosingmethodmanual ? "N/A" : (patientABW / calcIBW > 1.2 ? "Obese" : "Not Obese");
+  let patientBMI = dosingmethodmanual ? 0 : (
     patientABW != 0 && patientHeight != 0
       ? patientABW / (patientHeight / 39.37) ** 2
-      : 0;
-  let initdisable =
-    patientBMI == 0 || form.values.patientGender == "" ? true : false;
+      : 0);
+  let initdisable = dosingmethodmanual && patientdosingBW !=0 ? false :(
+    patientBMI == 0 || form.values.patientGender == "" ? true : false);
     
       const calMarks = [
         { stats: "Standard", min: 25, max: 30 },
@@ -214,20 +223,16 @@ function App() {
 
   return (
     <>
-      <Grid>
-        <Grid.Col span={4} px={20}>
-          <NumberInput
-            defaultValue={60}
-            placeholder="Patient Weight"
-            label={"Patient Weight in " + form.values.weightmeasurement}
-            variant="filled"
-            {...form.getInputProps("patientABW")}
-            hideControls
-            ta="center"
-            styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
-          />
-        </Grid.Col>
-        <Grid.Col span={2}>
+          <Tabs variant="pills" orientation="vertical" defaultValue="calculate" onTabChange={dosingselect}>
+        <Tabs.List>
+          <Tabs.Tab value="calculate" disabled={!dosingmethodmanual}>Calculate Dosing Weight</Tabs.Tab>
+          <Tabs.Tab value="custom" disabled={dosingmethodmanual}>Manual Dosing Weight</Tabs.Tab>
+        </Tabs.List>
+
+  
+      <Tabs.Panel value="calculate" pl="xs">
+        <Grid>
+          <Grid.Col span={1}>
           <SegmentedControl
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[3],
@@ -241,19 +246,20 @@ function App() {
             
           />
         </Grid.Col>
-        <Grid.Col span={4} px={20}>
+        <Grid.Col span={3} pr={20}>
           <NumberInput
             defaultValue={60}
-            placeholder="Patient Height"
-            label={"Patient Height in " + form.values.heightmeasurement}
+            placeholder="Patient Weight"
+            label={"Patient Weight in " + form.values.weightmeasurement}
             variant="filled"
-            {...form.getInputProps("patientHeight")}
+            {...form.getInputProps("patientABW")}
             hideControls
             ta="center"
             styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
           />
         </Grid.Col>
-        <Grid.Col span={2}>
+        
+        <Grid.Col span={1} offset={2}>
           <SegmentedControl
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[3],
@@ -266,6 +272,20 @@ function App() {
             ]}
           />
         </Grid.Col>
+        <Grid.Col span={3}>
+          <NumberInput
+            defaultValue={60}
+            placeholder="Patient Height"
+            label={"Patient Height in " + form.values.heightmeasurement}
+            variant="filled"
+            {...form.getInputProps("patientHeight")}
+            hideControls
+            ta="center"
+            styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
+          />
+        </Grid.Col>
+        <Grid.Col span={2}></Grid.Col>
+
         <Grid.Col span={12}>
           <Center>
             <Box
@@ -291,9 +311,42 @@ function App() {
               />
             </Box>
           </Center>{" "}
-          <hr></hr>
-        </Grid.Col>
 
+        </Grid.Col>
+        </Grid>
+        </Tabs.Panel>
+        <Tabs.Panel value="custom" pl="xs">
+          <Grid>        
+            <Grid.Col span={1}>
+          <SegmentedControl
+            sx={(theme) => ({
+              backgroundColor: theme.colors.gray[3],
+            })}
+            orientation="vertical"
+            {...form.getInputProps("weightmeasurement")}
+            data={[
+              { label: "Kg", value: "kg" },
+              { label: "Lb", value: "lb" },
+            ]}
+          /></Grid.Col>
+        <Grid.Col span={3}>
+        <NumberInput
+            defaultValue={0}
+            placeholder="Enter Dosing Weight"
+            label={"Dosing Weight in " + form.values.weightmeasurement}
+            variant="filled"
+            {...form.getInputProps("patientDosingWeight")}
+            hideControls
+            ta="center"
+            styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
+          />
+</Grid.Col>
+</Grid>
+            
+</Tabs.Panel>        
+</Tabs>
+<hr></hr>
+<Grid>
         <Grid.Col span={6} px={50}>
           <Radio.Group
             name="Calories"
