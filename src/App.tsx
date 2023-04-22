@@ -56,6 +56,8 @@ function App() {
   function dosingselect() {
     if (dosingmethodmanual == false) {setDosingmethod(true);}
     else {setDosingmethod(false)}
+    form.setValues({ patientCaloricStats: "Standard"});
+    form.setValues({ patientProteinStats: "Maintenance"});
   }
 
   let patientABW =
@@ -165,11 +167,16 @@ function App() {
         " kcal (of propofol infusion)"
       : Math.round(calcLipidscal) + " kcal";
   let calcCarbohydratescal = calcCalories - (calcProteins * 4 + calcLipidscal);
-  let calcGIR =
+  let calcGIR = dosingmethodmanual == true ?
+    calcCarbohydratescal /
+    3.4 /
+    patientdosingBW /
+    ((calcFluids / form.values.infusionRate) * 60):
     calcCarbohydratescal /
     3.4 /
     patientABW /
     ((calcFluids / form.values.infusionRate) * 60);
+
   let lipidFrequency =
     form.values.propofol && calcLipidsvol <= 0
       ? "Lipids Satisfied by Propofol Infusion"
@@ -203,6 +210,8 @@ function App() {
     }
   }, [patientProteinNeeds, proteinmarksmin, proteinmarksmax]);
 
+
+
   let calcOsmolarity =
     calcLipidsvol > 0
       ? (calcProteins * 10 +
@@ -231,8 +240,8 @@ function App() {
 
   
       <Tabs.Panel value="calculate" pl="xs">
-        <Grid>
-          <Grid.Col span={1}>
+        <Grid columns={24}>
+          <Grid.Col span={2} offset={1}>
           <SegmentedControl
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[3],
@@ -246,7 +255,7 @@ function App() {
             
           />
         </Grid.Col>
-        <Grid.Col span={3} pr={20}>
+        <Grid.Col span={6} pr={10}>
           <NumberInput
             defaultValue={60}
             placeholder="Patient Weight"
@@ -259,7 +268,7 @@ function App() {
           />
         </Grid.Col>
         
-        <Grid.Col span={1} offset={2}>
+        <Grid.Col span={2} offset={2}>
           <SegmentedControl
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[3],
@@ -272,7 +281,7 @@ function App() {
             ]}
           />
         </Grid.Col>
-        <Grid.Col span={3}>
+        <Grid.Col span={6}>
           <NumberInput
             defaultValue={60}
             placeholder="Patient Height"
@@ -285,8 +294,7 @@ function App() {
           />
         </Grid.Col>
         <Grid.Col span={2}></Grid.Col>
-
-        <Grid.Col span={12}>
+        <Grid.Col span={20}>
           <Center>
             <Box
               sx={(theme) => ({
@@ -316,8 +324,8 @@ function App() {
         </Grid>
         </Tabs.Panel>
         <Tabs.Panel value="custom" pl="xs">
-          <Grid>        
-            <Grid.Col span={1}>
+          <Grid columns={24}>        
+            <Grid.Col span={1} offset={1}>
           <SegmentedControl
             sx={(theme) => ({
               backgroundColor: theme.colors.gray[3],
@@ -329,7 +337,7 @@ function App() {
               { label: "Lb", value: "lb" },
             ]}
           /></Grid.Col>
-        <Grid.Col span={3}>
+        <Grid.Col span={6} offset={1}>
         <NumberInput
             defaultValue={0}
             placeholder="Enter Dosing Weight"
@@ -375,6 +383,7 @@ function App() {
                 disabled={initdisable}
               />
             </Tooltip>
+            <div  hidden={dosingmethodmanual}>
             <Tooltip label="11-14 kcal/kg/day by ABW">
               <Radio
                 value="Obese"
@@ -388,7 +397,7 @@ function App() {
                 label="Obese and Critical Illness (BMI >50kg/m^2)"
                 disabled={patientBMI < 50 || initdisable}
               />
-            </Tooltip>
+            </Tooltip></div>
           </Radio.Group>
           <br></br>
           <Slider
@@ -430,6 +439,7 @@ function App() {
                 disabled={initdisable || patientBMI > 30}
               />
             </Tooltip>
+            <div hidden={dosingmethodmanual}>
             <Tooltip label="2 gm/kg/day by IBW">
               <Radio
                 value="Crit2"
@@ -443,7 +453,7 @@ function App() {
                 label="Critical Illness (BMI >40kg/m^2)"
                 disabled={patientBMI < 40 || initdisable}
               />
-            </Tooltip>
+            </Tooltip></div>
             <Tooltip label="0.6-0.8 gm/kg/day(Not on HD, GFR <30m)">
               <Radio
                 value="CKD1"
@@ -541,14 +551,7 @@ function App() {
             ]}
           />
           </div>
-          <br></br>
-          <Checkbox
-            label="Custom TPN Volume"
-            disabled={initdisable}
-            {...form.getInputProps("customVolume")}
-            styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
-          />
-          <div hidden={!form.values.customVolume}>
+                    <div hidden={!form.values.customVolume}>
             <NumberInput
               defaultValue={2000}
               placeholder="in mL"
@@ -559,6 +562,14 @@ function App() {
               styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
             />
           </div>
+          <br></br>
+          <Checkbox
+            label="Custom TPN Volume"
+            disabled={initdisable}
+            {...form.getInputProps("customVolume")}
+            styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
+          />
+
         </Grid.Col>
         <Grid.Col span={6} px={50}>
           {" "}
@@ -578,11 +589,13 @@ function App() {
               { value: 20, label: 20 },
               { value: 30, label: 30 },
             ]}
+            styles={{ track: { backgroundColor: 'red'} }}
           />
           <br></br>
+          
           <Tooltip label="Propofol 10mg/ml contains 1.1 kcal/ml">
             <Checkbox
-              label="Propofol"
+              label="Active Propofol Infusion"
               disabled={initdisable}
               {...form.getInputProps("propofol")}
               styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
@@ -598,23 +611,6 @@ function App() {
               hideControls
               styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
             />
-          </div>
-        </Grid.Col>
-        <Grid.Col span={6} px={50}>
-          <Tooltip label="Used in GIR estimate">
-            <NumberInput
-              defaultValue={100}
-              placeholder="in mL"
-              label="TPN Infusion rate in mL/hr"
-              disabled={initdisable}
-              variant="filled"
-              {...form.getInputProps("infusionRate")}
-              hideControls
-              styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
-            />
-          </Tooltip>
-          <div hidden={initdisable}>
-            GIR: {Math.round(calcGIR * 100000) / 100} mg/kg/min
           </div>
         </Grid.Col>
       </Grid>
@@ -699,6 +695,7 @@ function App() {
         <Tabs.List>
           <Tabs.Tab value="basic info">Basic Info</Tabs.Tab>
           <Tabs.Tab value="osmolarity">Osmolarity</Tabs.Tab>
+          <Tabs.Tab value="GIR">GIR</Tabs.Tab>
           <Tabs.Tab value="formula">Formula</Tabs.Tab>
         </Tabs.List>
 
@@ -727,13 +724,12 @@ function App() {
                   multiline
                   label="Male: [50kg + 2.3 x (Height(Inches) - 60]    Female: [45.5kg + 2.3 x (Height(Inches) - 60]"
                 >
-                  <tr>
+                  <tr hidden={dosingmethodmanual}>
                     <th>IBW</th>
                     <th>{Math.round(calcIBW * 10) / 10} kg</th>
                   </tr>
                 </Tooltip.Floating>
-
-                <tr>
+                <tr hidden={dosingmethodmanual}>
                   <th>BMI</th>
                   <th>
                     {Math.round(patientBMI * 10) / 10} kg/m<sup>2</sup>
@@ -745,8 +741,7 @@ function App() {
                     <th>{Math.round(patientdosingBW * 10) / 10} kg</th>
                   </tr>
                 </Tooltip.Floating>
-
-                <tr>
+                <tr hidden={dosingmethodmanual}>
                   <th>{"Obesity (>120% IBW)"}</th>
                   <th>{patientObesity}</th>
                 </tr>
@@ -761,9 +756,9 @@ function App() {
         </Tabs.Panel>
 
         <Tabs.Panel value="osmolarity" pl="xs">
-          <Grid>
+          <Grid columns={24}>
             {" "}
-            <Grid.Col span={6}>
+            <Grid.Col span={7} offset={1}>
               <NumberInput
                 defaultValue={0}
                 placeholder="in mEq/L"
@@ -813,6 +808,31 @@ function App() {
             mOsm/L{" "}
           </Grid>
         </Tabs.Panel>
+        <Tabs.Panel value="GIR">
+            <Grid align="center">
+              <Grid.Col span={3}>
+                        <Tooltip label="Used in GIR estimate with Total Volume and Carbohydrates">  
+                          <NumberInput
+              defaultValue={100}
+              placeholder="in mL"
+              label="TPN Infusion rate in mL/hr"
+              disabled={initdisable}
+              variant="filled"
+              {...form.getInputProps("infusionRate")}
+              hideControls
+              styles={{ input: { backgroundColor: 'lightgrey', borderColor: 'black' } }}
+              mx={50}
+            />           
+            </Tooltip> 
+            </Grid.Col>
+            <Grid.Col span={3}>
+          <div hidden={initdisable}>
+            GIR: {Math.round(calcGIR * 100000) / 100} mg/kg/min
+          </div>
+            </Grid.Col>
+            </Grid>
+
+        </Tabs.Panel>
         <Tabs.Panel value="formula" pl="xs">
           <Center>
             {
@@ -838,7 +858,8 @@ function App() {
             {"Lipids (20% Concentration)= 2kcal/mL"} <br></br>
             {"Propofol (10mg/ml Concentration)= 1.1kcal/mL"} <br></br> <br></br>
             {"Kg = 2.205 x lb"} <br></br>
-            {"Inches = 2.54 x cm"} <br></br>
+            {"Inches = 2.54 x cm"} <br></br> <br></br>
+            {"GIR = [Total Carbohydrates(g)/Weight(kg)] / [Total Fluid Volume(mL)/Infusion Rate(mL/hr*60min/hr)]"} <br></br>
           </Center>
           <br></br>
         </Tabs.Panel>
